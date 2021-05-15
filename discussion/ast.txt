@@ -1,0 +1,136 @@
+If{
+    Expression condition;
+    List<Statement> Body;
+}
+
+For{
+    Statement initial_;
+    Expression:Comparison (Expression?) condition;
+    Statement fin_;
+}
+
+Statement{
+    int line_number;
+}
+
+Calculation sub-types{
+    BinaryOp,
+    UnaryOp,
+}
+
+BinaryOp{
+    Expression operand_first
+    Expression operand_last
+}
+
+UnaryOp{
+    Expression operand
+}
+
+BinaryOp sub-types{
+    Add,
+    Subt,
+    Mult,
+    Div,
+    Greater,
+    Less
+}
+
+UnaryOp sub-types{
+    Incr,
+}
+
+Expression{
+    
+}
+
+Statement sub-types{
+    FunctionDef,
+    Declaration,
+    Assignment,
+    For, 
+    If,
+    Expression,
+    Return,
+    Printf,
+    Free,
+}
+
+Printf{
+    list<Token> format,
+    list<Expression> arguments,
+}
+Token sub-types{
+    Str,
+    FormatVal,
+}
+
+FunctionDef{
+    string Identifier;
+    Type return_type;
+    int line_number; // function end line (line with "}")
+    list<pair<Identifier, Type>> parameters;
+    list<Statement> statements;
+    /*
+    Runtime에서 statements가 return문으로 종료되지 않을 경우, error로 간주
+    */
+}
+
+Return{
+    Expression return_value;
+}
+
+* gdb관측결과{
+    Statement가 아닌 Expression의 경우 line_number 트래킹을 하지 않음
+    for
+    (i = 0;
+    i==0;
+    printf("x")){
+        printf("y");
+    }
+    의 경우, "for" 및 "i==0"의 경우 next를 진행할 때 출력되지 않음.
+    매 loop마다 실행되는 조건문("i==0")의 경우, 그 앞 statement인 "i = 0"의 line number가 출력됨
+}
+
+Expression sub-types{
+    Calculation (including Comparisons),
+    Factor,
+    Malloc,
+}
+
+Factor sub-types{
+    Variable,
+    Constant,
+    Function,
+}
+
+Variable{
+    Type: Int/Float/Array
+    string Identifier
+    // Value: (not assigned during Parsing)
+}
+
+Constant{
+    Type: Int/Float
+    Value: ..
+}
+
+Function{
+    string Identifier,
+    list<Expression> Arguments,
+}
+
+History[
+    Id: 1(1) -> 2(2) ->...
+]
+
+
+
+int *i;
+i = malloc(10);
+
+int j[10];
+
+j = i;
+
+j++

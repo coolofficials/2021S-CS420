@@ -1,0 +1,42 @@
+Heap{
+    list<address, size>
+}
+
+->
+malloc(heap, size)
+<-
+address/Error
+"size_t should be a positive .."
+"OOM"
+
+->
+free(heap, address)
+<-
+Success/Error
+"Defragmentation operated" ?
+"not allocated.."
+
+---
+
+Parsing(Raw_Code)
+-> syntax error?
+-> AST
+
+RunTime(AST)
+-> Error?
+-> Malloc/Free
+
+---
+runtime.py
+
+from memory import *
+
+heap.malloc(..)
+heap.free(..)
+
+---
+memory.py
+
+Heap_Context heap{
+    
+}

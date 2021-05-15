@@ -1,0 +1,23 @@
+Scope{
+    History;
+    // Heap not included
+}
+
+History: table of variable identifiers & value history
+each entry:{
+    Identifier,
+    list of (line_number, value)
+}
+
+
+
+int x = 0;
+{
+    x = 1;
+}
+printf("%d",x);
+
+{
+    malloc(100);
+}
+(900 left)
