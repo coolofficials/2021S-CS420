@@ -249,4 +249,28 @@ Therefore, we expect the following pseudocode will be effective:
           next(it)
           statement_to_do = getItem(it)
           scope, heap = do_statement(statement, scope, heap)
-      }while(statment_to_do.line_number == cur_line)
+      }while(statment_to_do.line_number == cur_line)\
+
+
+## Dynamic Memory Management
+
+We must keep track of the heap structure for memory management. Data type for heap is list<address, size>. Address of the variable and allocating size will be saved in heap structure. In heap structure, some functions are needed to be declared as sub-functions of the heap for memory management as below:
+```
+class Heap:
+    __init__ (self, ..):
+        ...
+        
+    malloc(self, size):
+        ...
+    
+    free (addr):
+        ...
+        
+    mem (addr):
+        ...
+        print("Dynamic allocation : {}, {}\n".format( .., ..))
+```
+
+* Function *malloc*, for given specific size of memory field, x = malloc(heap, n) command should be able to find possible n size of memory space for variable x. Two possible errors might occur: size of malloc(heap, size) should be a positive value, and a memory space corresponding to the size must remain in the heap(Out Of Memory error).
+* Function *free*, free(x) should be able to deallocate memory space corresponding to variable x. Defragmentation is operated in free() function. If the defragmentation process fails or there is no memory allocated to variable x, it returns -1.
+* Function *mem*, mem command prints “Dynamic allocation : x, y” where x is the number of allocated variables and y is total currently allocated memory size.
