@@ -1,10 +1,10 @@
-# CS420 Term Project: 21May Report
+# CS420 Term Project Report: Internal Data Structure (21 May) 
 
 ### 20130117 Kim, Siwon. 20150608 Lee, Jun Hyeong. 20160625 Cho, Min Jun.
 
 ## Project Design
 
-We will write two separate programs to interpret the input code: the Interpreter and the AST Parser.       
+We will write two separate programs to interpret the input code: the Pasrer and the Runtime Simulator.       
 The Interpreter will parse through the input code, written in the Mini-C language. If the input code has no syntactical errors, it will be converted into an AST structure.     
 The AST structure will be passed on to the AST Parser, which will simulate and demonstrate the "runtime" environment of the input code, according to the command line inputs.
 
@@ -53,7 +53,7 @@ BinaryOp-subtypes{
     Mult,
     Div,
     Greater,
-    Less
+    Less,
 }
 
 Function{
@@ -128,9 +128,9 @@ Statement{
                 Add,
                 a,
                 b,
-            }
-        }
-    }
+            },
+        },
+    },
 }
 ```
 
@@ -151,9 +151,9 @@ Statement{
             return_type: int,
             end_line: 14,
             parameters:[Parameter{type:int, identifier: a}, Parameter{type:int, identifier: b}],
-            statements:[Statement{line_number: 13, Return{Expression{Calculation{BinaryOp{Add, a, b,}}}}}}]
-        }
-    }
+            statements:[Statement{line_number: 13, Return{Expression{Calculation{BinaryOp{Add, a, b,},},},},}],
+        },
+    },
 }
 ```
 
@@ -177,9 +177,32 @@ Statement{
             return_type: int,
             end_line: 25,
             parameters:[],
-            statements:[Statement{line_number: 21, Declaration{type: int, identifier: a}}, Statement{line_number: 22, Assignment{variable: a, value: Expression{Factor{FunctionCall{identifier: add, arguments: [Expression{Factor{Constant{type: int, value: 5}}}, Expression{Factor{Constant{type: int, value: 10}}}]}}}}},
-            Statement{line_number: 23, Printf{format: [], arguments: Expression{Factor{Variable{type: int, identifier: a}}}}}, Statement{line_number: 24, Return{Expression{Factor{Constant{type: int, value: 0}}}}},
-            ]
+            statements:[
+                Statement{line_number: 21, Declaration{type: int, identifier: a}}, 
+                Statement{
+                    line_number: 22, 
+                    Assignment{
+                        variable: a, 
+                        value: Expression{
+                                    Factor{
+                                        FunctionCall{
+                                            identifier: add,
+                                            arguments: [Expression{Factor{Constant{type: int, value: 5},},}, 
+                                                        Expression{Factor{Constant{type: int, value: 10},},}],
+                                        },
+                                    },
+                                },
+                    },
+                },
+                Statement{
+                    line_number: 23, 
+                    Printf{
+                        format: [], arguments: Expression{Factor{Variable{type: int, identifier: a}}}}}, Statement{
+                                line_number: 24, 
+                                Return{Expression{Factor{Constant{type: int, value: 0}}},
+                    },
+                },
+            ],
         }
     }
 }
