@@ -89,7 +89,7 @@ Statement{
 and AST for
 ```
 line 12: int add(int a, int b){
-line 13: return a + b
+line 13: return a + b;
 line 14: }
 ```
 
