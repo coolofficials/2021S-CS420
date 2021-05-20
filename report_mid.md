@@ -8,9 +8,9 @@ We will write two separate programs to interpret the input code: the Interpreter
 The Interpreter will parse through the input code, written in the Mini-C language. If the input code has no syntactical errors, it will be converted into an AST structure.     
 The AST structure will be passed on to the AST Parser, which will simulate and demonstrate the "runtime" environment of the input code, according to the command line inputs.
 
-## Interpreter (AST Generator)
+## Parser (AST Generator)
 
-The interpreter will generate the AST from the input source code. Some expamples of AST structures are as below.
+The parser will generate the AST from the input source code. Few parts AST structures are as below.
 
 ```
 Statement{
@@ -110,9 +110,9 @@ Printf{
 }
 ```
 
-### Examples of input codes and their AST outputs
+### Test cases of input codes and their AST outputs
 
-For example, AST for 
+For example, the AST for 
 
 ```
 line 1: a + b;
@@ -187,7 +187,7 @@ Statement{
 
 ### Syntax Error Checking
 
-The Interpreter must also do error checking. The Interpreter will not return AST for input codes with syntactical errors. 
+The Interpreter must also do syntax checking. The Interpreter will not return AST for input codes with syntactical errors.
 ```
 line 20: int main(){
 line 21:    int a;
@@ -202,11 +202,11 @@ Syntax error: line 22
 ```
 
 
-## AST Parser
+## Runtime Simulator (Debugger)
 
 ### Runtime Context Structures
 
-The AST Parser needs to keep track of the following additional contexts:
+The Runtime Simulator needs to keep track of the following additional contexts:
 
 * The *Scope*, which determines the *History* of declared variables, and the *Function Table* of declared functions.
 * The *History*, which is the table of declared variables in a given *Scope*. Each entry must hold the variable identifier and the records of all the value assignments that were done to it. Each record of value assignment must hold its line number and the assigned value.
@@ -227,7 +227,7 @@ The pseudocode for the above features would be as below:
     
 ### Tracking the Runtime Context
 
-The `Scope` (which contains the `History` and the `Function_Table`) and the `Heap` will both dynamically change as the Parser iterates through the `Statement`s in the AST.     
+The `Scope` (which contains the `History` and the `Function_Table`) and the `Heap` will both dynamically change as the Simulator iterates through the `Statement`s in the AST.     
 But the policy of managing the `Scope` and the `Heap` would be very different; for instance, when a function call returns in the input code, the `Scope` will be restored to that of the callee (except for global variables), but the `Heap` will remain as the same state as it was just before the function return.      
 
 Therefore, we expect the following pseudocode will be effective:
