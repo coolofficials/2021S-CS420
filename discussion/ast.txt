@@ -45,7 +45,7 @@ Expression{
 }
 
 Statement sub-types{
-    FunctionDef,
+    Function,
     Declaration,
     Assignment,
     For, 
@@ -65,7 +65,7 @@ Token sub-types{
     FormatVal,
 }
 
-FunctionDef{
+Function{
     string Identifier;
     Type return_type;
     int line_number; // function end line (line with "}")
@@ -101,7 +101,7 @@ Expression sub-types{
 Factor sub-types{
     Variable,
     Constant,
-    Function,
+    Function_Call,
 }
 
 Variable{
@@ -115,7 +115,7 @@ Constant{
     Value: ..
 }
 
-Function{
+Function_Call{
     string Identifier,
     list<Expression> Arguments,
 }
@@ -124,13 +124,4 @@ History[
     Id: 1(1) -> 2(2) ->...
 ]
 
-
-
-int *i;
-i = malloc(10);
-
-int j[10];
-
-j = i;
-
-j++
+List<Statement> statements;

@@ -1,23 +1,50 @@
+AST structure (Where AST objects are nested inside each other)
+
+The entire code will look like:
+
+
 Scope{
     History;
+    Function Table;
     // Heap not included
+}
+
+Function Table:
+entry{
+    string Identifier;
+    Type return_type;
+    int line_number; // function end line (line with "}")
+    list<pair<Identifier, Type>> parameters;
+    list<Statement> statements;
 }
 
 History: table of variable identifiers & value history
 each entry:{
     Identifier,
-    list of (line_number, value)
+    list of (line_number, constant)
 }
 
 
+main 시작 단계에서의 [Scope]
 
-int x = 0;
-{
-    x = 1;
-}
-printf("%d",x);
 
-{
-    malloc(100);
+scope, heap = do_statement(Statement statement, Scope scope, Heap heap){
+    ...
+    만약 statement 가 Function_Call function_call
+        {string Identifier, list<Expression> Arguments} 라면
+    Scope
+    
+    return scope_after, heap_after
 }
-(900 left)
+
+cur_line = ...
+iterator <Statement> it
+scope, heap = do_next(it)
+
+def do_next(it):
+    cur_line++
+    do{
+        next(it)
+        statement_to_do = getItem(it)
+        scope, heap = do_statement(statement, scope, heap)
+    }while(statment_to_do.line_number == cur_line)
