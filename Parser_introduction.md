@@ -102,7 +102,7 @@ Statement{
             identifier: add,
             return_type: int,
             end_line: 14,
-            parameters:[Parameter{type:int, identifier: a}, Parameter{type:int, identifier: b}],
+            parameters:[Parameter{type: int, identifier: a}, Parameter{type: int, identifier: b}],
             statements:[Statement{line_number: 13, Return{Expression{Calculation{BinaryOp{Add, a, b,}}}}}}]
         }
     }
