@@ -263,14 +263,14 @@ class Heap:
     malloc(self, size):
         ...
     
-    free (addr):
+    free (self, addr):
         ...
         
-    mem (addr):
+    mem (self):
         ...
         print("Dynamic allocation : {}, {}\n".format( .., ..))
 ```
 
-* Function *malloc*, for given specific size of memory field, x = malloc(heap, n) command should be able to find possible n size of memory space for variable x. Two possible errors might occur: size of malloc(heap, size) should be a positive value, and a memory space corresponding to the size must remain in the heap(Out Of Memory error).
-* Function *free*, free(x) should be able to deallocate memory space corresponding to variable x. Defragmentation is operated in free() function. If the defragmentation process fails or there is no memory allocated to variable x, it returns -1.
-* Function *mem*, mem command prints “Dynamic allocation : x, y” where x is the number of allocated variables and y is total currently allocated memory size.
+* `malloc`: The function call `malloc(size)` in the input code invokes a call to `heap.malloc(size)` method at Runtime. The method to find possible n size of memory space for variable x. Two possible errors might occur: the `size` might be a negative value, or there might be not enough space left in the heap (which will cause an Out Of Memory Error).
+* `free`: The function call `free(addr)` in the input code invokes a call to `heap.free(addr)` method at Runtime. The method will deallocate memory space corresponding to variable `addr`, and also execute defragmentation in the memory space. If the defragmentation process fails or there is no memory allocated to variable x, it returns -1.
+* `mem`, The command line `mem` invokes a call to `heap.mem()` method in runtime. This will print out the message “Dynamic allocation : x, y” where x is the number of allocated variables and y is the total memory size of the allocated space.
