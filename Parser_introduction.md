@@ -62,6 +62,42 @@ Parameter{
 Return{
     Expression,
 }
+
+Declaration{
+    string type, // int or float.
+    string identifier,
+}
+
+Assignment{
+    identifier variable,
+    Expression value,
+}
+
+Factor{
+    FunctionCall,
+    Constant,
+    Variable,
+}
+
+FunctionCall{
+    string identifer,
+    list<Expression> arguments,
+}
+
+Constant{
+    string type, // int or float.
+    type value, // for corresponding type.
+}
+
+Variable{
+    string type, // for type checking.
+    string identifier,
+}
+
+Printf{
+    list<Token> format,
+    list<Expression> arguments,
+}
 ```
 
 For example, AST for 
@@ -89,7 +125,7 @@ Statement{
 and AST for
 ```
 line 12: int add(int a, int b){
-line 13: return a + b;
+line 13: return a + b
 line 14: }
 ```
 
@@ -102,9 +138,50 @@ Statement{
             identifier: add,
             return_type: int,
             end_line: 14,
-            parameters:[Parameter{type: int, identifier: a}, Parameter{type: int, identifier: b}],
+            parameters:[Parameter{type:int, identifier: a}, Parameter{type:int, identifier: b}],
             statements:[Statement{line_number: 13, Return{Expression{Calculation{BinaryOp{Add, a, b,}}}}}}]
         }
     }
 }
+```
+
+Code including `main` function:
+```
+line 20: int main(){
+line 21:    int a;
+line 22:    a = add(5, 10);
+line 23:    printf(a);
+line 24:    return 0;
+line 25: }
+```
+
+Corresponding AST:
+```
+Statement{
+    line_number: 20,
+    Expression{
+        Function{
+            identifier: main,
+            return_type: int,
+            end_line: 25,
+            parameters:[],
+            statements:[Statement{line_number: 21, Declaration{type: int, identifier: a}}, Statement{line_number: 22, Assignment{variable: a, value: Expression{Factor{FunctionCall{identifier: add, arguments: [Expression{Factor{Constant{type: int, value: 5}}}, Expression{Factor{Constant{type: int, value: 10}}}]}}}}},
+            Statement{line_number: 23, Printf{format: [], arguments: Expression{Factor{Variable{type: int, identifier: a}}}}}, Statement{line_number: 24, Return{Expression{Factor{Constant{type: int, value: 0}}}}},
+            ]
+        }
+    }
+}
+```
+AST generation will include syntax checking. For code having Syntax Error, AST will not be returned.
+```
+line 20: int main(){
+line 21:    int a;
+line 22:    a = add(5, ); // Syntax Error!
+line 23:    printf(a);
+line 24:    return 0;
+line 25: }
+```
+
+```
+Syntax error: line 22
 ```
