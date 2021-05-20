@@ -10,7 +10,7 @@ The AST structure will be passed on to the AST Parser, which will simulate and d
 
 ## AST Parser
 
-## Runtime Context Structures
+### Runtime Context Structures
 
 The AST Parser needs to keep track of the following additional contexts:
 
@@ -31,7 +31,7 @@ The pseudocode for the above features would be as below:
     typedef list<int, Constant> HistoryEntry;
     typedef map<string, HistoryEntry> History;
     
-## Tracking the Runtime Context
+### Tracking the Runtime Context
 
 The `Scope` (which contains the `History` and the `Function_Table`) and the `Heap` will both dynamically change as the Parser iterates through the `Statement`s in the AST.     
 But the policy of managing the `Scope` and the `Heap` would be very different; for instance, when a function call returns in the input code, the `Scope` will be restored to that of the callee (except for global variables), but the `Heap` will remain as the same state as it was just before the function return.      
