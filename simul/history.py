@@ -1,5 +1,4 @@
-from typing import type_check_only
-
+import copy
 
 class HistoryEntry:
     def __init__(self, type_, native=True):
@@ -18,9 +17,9 @@ class History:
     def __init__(self):
         self.table = dict()
     
-    def defVar(self, id, type_):
+    def declare(self, id, type_):
         # id (str): identifier of variable
-        if id in self.table:
+        if id not in self.table:
             self.table[id] = list()
             self.table[id].append(HistoryEntry(type_, True))
         else:
@@ -34,19 +33,19 @@ class History:
             raise RuntimeError("\'{}\' undeclared".format(id))
         else:
             he = self.table[id][-1]
-            if he.type == constant.type:
-                he.updateVal(line_number, constant.value)
+            if he.type == constant["type"]:
+                he.updateVal(line_number, constant["value"])
             else:
                 raise RuntimeError("type mismatch")
                 # TODO: type-casting
     
-    def printVar(self, id):
+    def print(self, id):
         if id not in self.table:
             # Not defined
             print("Invisible variable")
         
         else:
-            he = self.table[id][-1]
+            he = self.table[id]
             if he.history:
                 # Defined and assigned
                 print(he.history[-1][1])
@@ -58,7 +57,7 @@ class History:
         # Pointers should print "Invalid typing of the variable name"
             
     
-    def printHistory(self, id):
+    def trace(self, id):
         if id not in self.table:
             # Not defined
             print("Invisible variable")
@@ -67,6 +66,12 @@ class History:
             he = self.table[id][-1]
             if he.history:
                 # Defined and assigned
+                
+                # Dilemma: what to do if variable had value(s) assigned,
+                # but was re-declared in the current scope and was not assigned?
+                # For now, only trace the assignments after the last declaration.
+                
+                # for he in self.table[id]:
                 for line_number, val in he.history:
                     print("{} = {} at line {}".format(id, val, line_number))
             else:
@@ -76,7 +81,6 @@ class History:
         # TODO: type-checking
         # Pointers should print "Invalid typing of the variable name"
         
-            
-    
-    # def copy(self):
-    #     None
+    def deepcopy(self):
+        # custom deepcopy, alias of deepcopy in copy module
+        return copy.deepcopy(self)
