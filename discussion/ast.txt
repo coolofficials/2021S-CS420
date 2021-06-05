@@ -57,7 +57,7 @@ Statement sub-types{
 }
 
 Printf{
-    list<Token> format,
+    list<Type> format,
     list<Expression> arguments,
 }
 Token sub-types{
