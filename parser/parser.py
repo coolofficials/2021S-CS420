@@ -65,40 +65,64 @@ class Statement:
         self.child
 
     # Perform appropriate parsing for the statement.
-    # TODO: parse
+    # body: A list of lines of code.
+    # TODO: parse, especially parsing statements... handle nested parenthesis.
     def parse(self, body):
         key = getFirstWord(body[0])
         if key == "if":
             # get conditions and body.
-            # self.body[0] = 'if (conditon) {'
-            # self.body[1~-2] = self.child.body, statements.
-            # self.body[-1] = '}'
+            # body[0] = 'if (conditon) {'
+            # body[1~-2] = self.child.body, statements.
+            # body[-1] = '}'
             self.child = If().parse(condition, statements)
         elif key == "for":
-            # self.body[0] = 'for (initializer: assignment; condition: expr; step: expr) {'
-            # self.body[1~-2] = self.child.body, statements.
-            # self.body[-1] = '}'
+            # body[0] = 'for (initializer: assignment; condition: expr; step: expr) {'
+            # body[1~-2] = self.child.body, statements.
+            # body[-1] = '}'
             self.child = For().parse(initializer, condition, step, statements)
+
+        # Done
         elif key == "return":
-            # self.body[0] = 'return expr;'
+            # body[0] = 'return expr;'
+            expr = body[0].split(" ", 1)[1][:-1]
             self.child = Return().parse(expr)
+
+        # TODO: get token
         elif key == "printf":
-            # self.body[0] = 'printf(token);'
+            # body[0] = 'printf(token);'
             self.child = Printf().parse(token)
+
+        # Done
         elif key == "Free":
-            # self.body[0] = 'free (variable);'
+            # body[0] = 'free (variable);'
+            variable = body[0].split(" ", 1)[1][1:-2]
             self.child = Free().parse(variable)
-        elif key in {"int", "float"} and self.body[0][-1] == "{":
-            # self.body[0] = 'int/float identifier (parameters) {'
+
+        # TODO: get params & statements.
+        elif key in {"int", "float"} and body[0][-1] == "{":
+            # body[0] = 'int/float identifier (parameters) {'
+            signature = key
+            identifier = getSecondWord(body[0])
             self.child = Function().parse(signature, identifier, parameters, statements)
+
+        # Done
         elif key in {"int", "float"}:
-            # self.body[0] = 'int/float identifier;'
+            # body[0] = 'int/float identifier;'
+            signature = key
+            identifier = getSecondWord(body[0])
             self.child = Declaration().parse(signature, identifier)
-        elif getSecondWord(self.body[0]) == "=":
-            # self.body = 'identifier = expr;'
+
+        # Done
+        elif getSecondWord(body[0]) == "=":
+            # body[0] = 'identifier = expr;'
+            identifier = body[0].split(" ")[0]
+            expr = body[0].split(" ", 2)[2][:-1]
             self.child = Assignment().parse(identifier, expr)
+
+        # Done
         else:
-            # self.body = 'expr;'
+            # body[0] = 'expr;'
+            expr = body[0][:-1]
             self.child = Expression().parse(expr)
 
 
@@ -201,7 +225,7 @@ class Expression:
     def __init__(self):
         self.type
 
-    def parse(self):
+    def parse(self, expr):
         pass
 
 
