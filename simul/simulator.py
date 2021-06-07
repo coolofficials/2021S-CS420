@@ -1,14 +1,7 @@
 import os, sys
 
 # Local
-from scope import *
-
-
-class State:
-    def __init__(self):
-        self.scope = Scope()
-        self.ftable = FunctionTable()
-        self.heap = None
+from state import *
 
 def parse_cli(cli):
     tokens = cli.split()
@@ -21,7 +14,7 @@ def parse_cli(cli):
             "next [LINES]\n"
             "print VARIABLE\n"
             "trace VARIABLE\n"
-            "mem"
+            "mem\n"
             "exit"
         )
         return False, None, None
@@ -81,6 +74,8 @@ def parse_cli(cli):
 
 
 if __name__ == "__main__":
+    state = State([])
+    
     do_next_loop = True
     while(do_next_loop):
         cli = input(">> ")
@@ -92,4 +87,12 @@ if __name__ == "__main__":
             if (cmd == "exit"):
                 do_next_loop = False
             else:
-                print(cmd, arg)
+                if (cmd == "next"):
+                    for i in range(arg):
+                        state.next()
+                elif (cmd == "print"):
+                    None
+                elif (cmd == "trace"):
+                    None
+                elif (cmd == "mem"):
+                    None
