@@ -57,7 +57,19 @@ class Expression:
 
 class Declaration:
     def __init__(self):
-        pass
+        self.type
+        self.identifier
+        self.size
+
+    # type = {"int", "float"}, identifier: consider naming convention, size: if any (default: None).
+    def parse(self, type, identifier, size):
+        if type not in {"int", "float"}:
+            syntaxError()
+        self.type = type
+        self.identifier = Identifier.parse(identifier)
+        self.size = size
+
+        return self
 
 
 class Return:
