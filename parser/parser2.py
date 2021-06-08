@@ -14,7 +14,7 @@ class Statement:
         self.child = Expression()
         pass
 
-    def parse(self, args):
+    def parse(self):
         return self
 
 
@@ -66,7 +66,7 @@ class Declaration:
         if type not in {"int", "float"}:
             syntaxError()
         self.type = type
-        self.identifier = Identifier.parse(identifier)
+        self.identifier = Identifier().parse(identifier)
         self.size = size
 
         return self
@@ -87,17 +87,66 @@ class Return:
 
 class If:
     def __init__(self):
-        pass
+        self.condition = []
+        self.then = []
+        self.else = []
+
+    def parse(self, condition, then, else):
+        self.condition = Statement().parse(condition)
+        if self.condition.child.tag != "Expression":
+            syntaxError()
+        for stmt in then:
+            self.then.append(Statement().parse(stmt))
+        for stmt in else:
+            self.else.append(Statement().parse(stmt))
+        
+        return self
 
 
 class For:
     def __init__(self):
-        pass
+        self.initializer
+        self.condition
+        self.step
+        self.statements = []
+
+    def parse(self, initializer, condition, step, statements):
+        self.initializer = Statement().parse(initializer)
+        if self.initializer.child.tag != "Expression":
+            syntaxError()
+        self.condition = Statement().parse(condition)
+        if self.condition.child.tag != "Expression":
+            syntaxError()
+        self.step = Statement().parse(step)
+        if self.step.child.tag != "Expression":
+            syntaxError()
+        for stmt in statements:
+            self.statements.append(Statement().parse(stmt))
+
+        return self
 
 
 class Function:
     def __init__(self):
-        pass
+        self.type
+        self.identifier
+        self.parameters = []
+        self.statements = []
+
+    def parse(self, type, identifier, parameters, statements):
+        if type not in {"int", "float"}:
+            syntaxError()
+        self.type = type
+        self.identifier = Identifier().parse(identifier)
+        for param in parameters:
+            parameter = Statement().parse(param)
+            if parameter.child.tag != "Declaration":
+                syntaxError()
+            self.parameters.append(parameter)
+        for stmt in statements:
+            self.statements.append(Statement().parse(stmt))
+            
+        return self
 
 
 # -----------------------------------------------------------------------------------------------
@@ -121,7 +170,6 @@ class UnaryOp:
 
         self.is_lvalue = False
 
-    # TODO: Temporary parsing.
     def parse(self, operator, operand):
         self.operator = operator
         self.operand = Statement().parse(operand)
