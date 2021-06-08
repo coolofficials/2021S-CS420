@@ -74,7 +74,15 @@ class Declaration:
 
 class Return:
     def __init__(self):
-        pass
+        self.expr
+
+    # expr: as string.
+    def parse(self, expr):
+        self.expr = Statement().parse(expr)
+        if self.expr.child.tag != "Expression":
+            syntaxError()
+
+        return self
 
 
 class If:
