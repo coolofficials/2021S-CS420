@@ -64,7 +64,7 @@ class State:
                     # our simulator will terminate one line earlier than gdb.
                     
                     forblk = stmt
-                    if bool(self.evaluate(forblk.condition)):
+                    if bool(self.evaluate(forblk.condition, stmt.line_number)):
                         self.goback.append(
                             (self.scope.deepcopy(1), self.ip, list(self.statements))
                         )
@@ -75,28 +75,97 @@ class State:
                 # TODO: Other cases
     
     def execute_stmt(self, stmt, aux = None):
-        if (stmt.tag == "function"):
-            function = stmt
+        chld = stmt.child
+        if (chld.tag == "function"):
+            function = chld
             self.ftable.define(
                 function,
                 self.scope
             )
         
-        elif (stmt.tag == "declaration"):
-            decl = stmt
+        elif (chld.tag == "declaration"):
+            decl = chld
             self.scope.history.declare(
                 decl.id,
                 decl.type
             )
         
-        elif (stmt.tag == "assignment"):
-            asgn = stmt
+        elif (chld.tag == "assignment"):
+            asgn = chld
             self.scope.history.assign(
                 asgn.id,
                 asgn.constant,
                 asgn.line_number
             )
         
-        elif (stmt.tag == "for"):
+        elif (chld.tag == "for"):
             forblk = stmt
-            forblk.initial
+            init = forblk.initializer
+            loop = forblk.body + [forblk.step]
+            condition = forblk.condition
+    
+    def evaluate(self, expression, line_number):
+        chld = expression.child
+        
+        if (chld.tag == "UnaryOp"):
+            self.eval_unary(chld, line_number)
+        
+        elif (chld.tag == "BinaryOp"):
+            self.eval_binary(chld, line_number)
+        
+        elif (chld.tag == "Variable"):
+            self.scope.history.get_value(chld.id)
+        
+        elif (chld.tag == "FunctionCall"):
+            self.eval_functioncall(chld, line_number)
+    
+    def eval_unary(self, unaryop, line_number):
+        operator = self.operator
+        operand = self.operand
+        
+        if operator == "pre++":
+            const = copy.deepcopy(self.scope.history.get_value(operator.identifier))
+            self.scope.history.assign(
+                operator.identifier,
+                Constant(const.type, const.value + 1),
+                line_number
+            )
+            return const
+        
+        elif operator == "pre--":
+            const = copy.deepcopy(self.scope.history.get_value(operator.identifier))
+            self.scope.history.assign(
+                operator.identifier,
+                Constant(const.type, const.value + 1),
+                line_number
+            )
+            return const
+        
+        elif operator == "post++":
+            const = self.scope.history.get_value(operator.identifier)
+            self.scope.history.assign(
+                operator.identifier,
+                Constant(const.type, const.value + 1),
+                line_number
+            )
+            return copy.deepcopy(self.scope.history.get_value(operator.identifier))
+        
+        elif operator == "post--":
+            const = self.scope.history.get_value(operator.identifier)
+            self.scope.history.assign(
+                operator.identifier,
+                Constant(const.type, const.value + 1),
+                line_number
+            )
+            return copy.deepcopy(self.scope.history.get_value(operator.identifier))
+        
+        elif operator == "&":
+            #TODO
+            return None
+        
+        elif operator == "*":
+            #TODO
+            return None
+        
+    
+        

@@ -51,7 +51,7 @@ class History:
             hte = self.table[id][-1]
             if hte.log:
                 # Defined and assigned
-                print(hte.log[-1][-1])
+                print(hte.log[-1][1])
             else:
                 # Defined yet not assigned
                 print("N/A")
@@ -102,6 +102,12 @@ class History:
             
         return history
     
+    def get_value(self, id):
+        if id not in self.table:
+            raise RuntimeError()
+        else:
+            hte = self.table[id][-1]
+            return Constant(hte.type , hte.log[-1][1])
     
 # if __name__ == "__main__":
 #     # Test Code
