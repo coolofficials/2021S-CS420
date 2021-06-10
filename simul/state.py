@@ -3,6 +3,13 @@ from collections import deque
 # Local
 from scope import *
 
+def to_type(value, type_):
+    if type_ == "int":
+        return int(value)
+    elif type_ == "float":
+        return float(value)
+    else:
+        return value
 
 class State:
     def __init__(self, statements):
@@ -167,5 +174,190 @@ class State:
             #TODO
             return None
         
-    
+    def eval_binary (self, binaryop, line_number):
+        operator = binaryop.operator
+        left = binaryop.lhs
+        right = binaryop.rhs
+        
+        if operator == "<=":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            return Constant(
+                "int",
+                int(left_const.value <= right_const.value)
+            )
+        
+        elif operator == "<":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            return Constant(
+                "int",
+                int(left_const.value < right_const.value)
+            )
+        
+        elif operator == ">=":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            return Constant(
+                "int",
+                int(left_const.value >= right_const.value)
+            )
+        
+        elif operator == "==":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            return Constant(
+                "int",
+                int(left_const.value == right_const.value)
+            )
+        
+        elif operator == "!=":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            return Constant(
+                "int",
+                int(left_const.value != right_const.value)
+            )
+        
+        elif operator == "+":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            
+            # if left_const.type not in ["int", "float"]: raise RuntimeError()
+            # if right_const.type not in ["int", "float"]: raise RuntimeError()
+            if left_const.type == "float" or right_const.type == "float":
+                return Constant(
+                    "float",
+                    float(left_const.value + right_const.value)
+                )
+            else:
+                return Constant(
+                    "int",
+                    int(left_const.value + right_const.value)
+                )
+        
+        elif operator == "-":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            
+            # if left_const.type not in ["int", "float"]: raise RuntimeError()
+            # if right_const.type not in ["int", "float"]: raise RuntimeError()
+            if left_const.type == "float" or right_const.type == "float":
+                return Constant(
+                    "float",
+                    float(left_const.value - right_const.value)
+                )
+            else:
+                return Constant(
+                    "int",
+                    int(left_const.value - right_const.value)
+                )
+        
+        elif operator == "*":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            
+            # if left_const.type not in ["int", "float"]: raise RuntimeError()
+            # if right_const.type not in ["int", "float"]: raise RuntimeError()
+            if left_const.type == "float" or right_const.type == "float":
+                return Constant(
+                    "float",
+                    float(left_const.value * right_const.value)
+                )
+            else:
+                return Constant(
+                    "int",
+                    int(left_const.value * right_const.value)
+                )
+        
+        elif operator == "/":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            
+            # if left_const.type not in ["int", "float"]: raise RuntimeError()
+            # if right_const.type not in ["int", "float"]: raise RuntimeError()
+            if left_const.type == "float" or right_const.type == "float":
+                return Constant(
+                    "float",
+                    float(left_const.value / right_const.value)
+                )
+            else:
+                return Constant(
+                    "int",
+                    int(left_const.value / right_const.value)
+                )
+        
+        elif operator == "%":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            
+            if left_const.type != "int": raise RuntimeError()
+            if right_const.type != "int": raise RuntimeError()
+            
+            return Constant(
+                "int",
+                int(left_const.value % right_const.value)
+            )
+        
+        elif operator == "^":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            
+            if left_const.type != "int": raise RuntimeError()
+            if right_const.type != "int": raise RuntimeError()
+            
+            return Constant(
+                "int",
+                int(left_const.value ^ right_const.value)
+            )
+        
+        elif operator == "&":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            
+            if left_const.type != "int": raise RuntimeError()
+            if right_const.type != "int": raise RuntimeError()
+            
+            return Constant(
+                "int",
+                int(left_const.value & right_const.value)
+            )
+        
+        elif operator == "|":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            
+            if left_const.type != "int": raise RuntimeError()
+            if right_const.type != "int": raise RuntimeError()
+            
+            return Constant(
+                "int",
+                int(left_const.value | right_const.value)
+            )
+        
+        elif operator == "&&":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            
+            if left_const.type != "int": raise RuntimeError()
+            if right_const.type != "int": raise RuntimeError()
+            
+            return Constant(
+                "int",
+                int(bool(left_const.value) and bool(right_const.value))
+            )
+        
+        
+        elif operator == "||":
+            left_const = self.evaluate(self, left, line_number)
+            right_const = self.evaluate(self, right, line_number)
+            
+            if left_const.type != "int": raise RuntimeError()
+            if right_const.type != "int": raise RuntimeError()
+            
+            return Constant(
+                "int",
+                int(bool(left_const.value) or bool(right_const.value))
+            )
+        
         
