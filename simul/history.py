@@ -1,6 +1,8 @@
 import copy
 from collections import deque
 
+from parser2 import *
+
 class HistoryEntry:
     def __init__(self, type_, layer = 0):
         # id (str): identifier of variable
@@ -102,7 +104,7 @@ class History:
             
         return history
     
-    def get_value(self, id):
+    def get_const(self, id):
         if id not in self.table:
             raise RuntimeError()
         else:

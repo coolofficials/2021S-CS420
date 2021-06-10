@@ -2,6 +2,7 @@ from collections import deque
 
 # Local
 from scope import *
+from parser2 import *
 
 def to_type(value, type_):
     if type_ == "int":
@@ -93,14 +94,14 @@ class State:
         elif (chld.tag == "declaration"):
             decl = chld
             self.scope.history.declare(
-                decl.id,
+                decl.identifier,
                 decl.type
             )
         
         elif (chld.tag == "assignment"):
             asgn = chld
             self.scope.history.assign(
-                asgn.id,
+                asgn.identifier,
                 asgn.constant,
                 asgn.line_number
             )
@@ -121,50 +122,52 @@ class State:
             self.eval_binary(chld, line_number)
         
         elif (chld.tag == "Variable"):
-            self.scope.history.get_value(chld.id)
+            self.scope.history.get_const(chld.identifier)
         
         elif (chld.tag == "FunctionCall"):
             self.eval_functioncall(chld, line_number)
     
     def eval_unary(self, unaryop, line_number):
-        operator = self.operator
-        operand = self.operand
+        operator = unaryop.operator
+        operand = unaryop.operand.child
         
+        ## Currently only supports Identifier for operand
+        ## TODO: Array indexing support
         if operator == "pre++":
-            const = copy.deepcopy(self.scope.history.get_value(operator.identifier))
+            const = copy.deepcopy(self.scope.history.get_const(operand.identifier))
             self.scope.history.assign(
-                operator.identifier,
+                operand.identifier,
                 Constant(const.type, const.value + 1),
                 line_number
             )
             return const
         
         elif operator == "pre--":
-            const = copy.deepcopy(self.scope.history.get_value(operator.identifier))
+            const = copy.deepcopy(self.scope.history.get_const(operand.identifier))
             self.scope.history.assign(
-                operator.identifier,
+                operand.identifier,
                 Constant(const.type, const.value + 1),
                 line_number
             )
             return const
         
         elif operator == "post++":
-            const = self.scope.history.get_value(operator.identifier)
+            const = self.scope.history.get_const(operand.identifier)
             self.scope.history.assign(
-                operator.identifier,
+                operand.identifier,
                 Constant(const.type, const.value + 1),
                 line_number
             )
-            return copy.deepcopy(self.scope.history.get_value(operator.identifier))
+            return copy.deepcopy(self.scope.history.get_const(operand.identifier))
         
         elif operator == "post--":
-            const = self.scope.history.get_value(operator.identifier)
+            const = self.scope.history.get_const(operand.identifier)
             self.scope.history.assign(
-                operator.identifier,
+                operand.identifier,
                 Constant(const.type, const.value + 1),
                 line_number
             )
-            return copy.deepcopy(self.scope.history.get_value(operator.identifier))
+            return copy.deepcopy(self.scope.history.get_const(operand.identifier))
         
         elif operator == "&":
             #TODO
@@ -176,52 +179,52 @@ class State:
         
     def eval_binary (self, binaryop, line_number):
         operator = binaryop.operator
-        left = binaryop.lhs
-        right = binaryop.rhs
+        left = binaryop.lhs.child
+        right = binaryop.rhs.child
         
         if operator == "<=":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             return Constant(
                 "int",
                 int(left_const.value <= right_const.value)
             )
         
         elif operator == "<":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             return Constant(
                 "int",
                 int(left_const.value < right_const.value)
             )
         
         elif operator == ">=":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             return Constant(
                 "int",
                 int(left_const.value >= right_const.value)
             )
         
         elif operator == "==":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             return Constant(
                 "int",
                 int(left_const.value == right_const.value)
             )
         
         elif operator == "!=":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             return Constant(
                 "int",
                 int(left_const.value != right_const.value)
             )
         
         elif operator == "+":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             
             # if left_const.type not in ["int", "float"]: raise RuntimeError()
             # if right_const.type not in ["int", "float"]: raise RuntimeError()
@@ -237,8 +240,8 @@ class State:
                 )
         
         elif operator == "-":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             
             # if left_const.type not in ["int", "float"]: raise RuntimeError()
             # if right_const.type not in ["int", "float"]: raise RuntimeError()
@@ -254,8 +257,8 @@ class State:
                 )
         
         elif operator == "*":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             
             # if left_const.type not in ["int", "float"]: raise RuntimeError()
             # if right_const.type not in ["int", "float"]: raise RuntimeError()
@@ -271,8 +274,8 @@ class State:
                 )
         
         elif operator == "/":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             
             # if left_const.type not in ["int", "float"]: raise RuntimeError()
             # if right_const.type not in ["int", "float"]: raise RuntimeError()
@@ -288,8 +291,8 @@ class State:
                 )
         
         elif operator == "%":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             
             if left_const.type != "int": raise RuntimeError()
             if right_const.type != "int": raise RuntimeError()
@@ -300,8 +303,8 @@ class State:
             )
         
         elif operator == "^":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             
             if left_const.type != "int": raise RuntimeError()
             if right_const.type != "int": raise RuntimeError()
@@ -312,8 +315,8 @@ class State:
             )
         
         elif operator == "&":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             
             if left_const.type != "int": raise RuntimeError()
             if right_const.type != "int": raise RuntimeError()
@@ -324,8 +327,8 @@ class State:
             )
         
         elif operator == "|":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             
             if left_const.type != "int": raise RuntimeError()
             if right_const.type != "int": raise RuntimeError()
@@ -336,8 +339,8 @@ class State:
             )
         
         elif operator == "&&":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             
             if left_const.type != "int": raise RuntimeError()
             if right_const.type != "int": raise RuntimeError()
@@ -349,8 +352,8 @@ class State:
         
         
         elif operator == "||":
-            left_const = self.evaluate(self, left, line_number)
-            right_const = self.evaluate(self, right, line_number)
+            left_const = self.evaluate(left, line_number)
+            right_const = self.evaluate(right, line_number)
             
             if left_const.type != "int": raise RuntimeError()
             if right_const.type != "int": raise RuntimeError()
@@ -360,4 +363,78 @@ class State:
                 int(bool(left_const.value) or bool(right_const.value))
             )
         
+        elif operator == "=":
+            # if not left.is_lvalue: raise RuntimeError()
+            if left.child.tag == "Identifier":
+                right_const = self.evaluate(right, line_number)
+                self.scope.history.assign(
+                    left.identifier,
+                    right_const
+                )
+                return right_const
         
+        elif operator == "+=":
+            if left.child.tag == "Identifier":
+                right_const = self.evaluate(right, line_number)
+                left_const = self.scope.get_const(left.identifier)
+                ret_const = Constant.sum(left_const, right_const)
+                self.scope.history.assign(
+                    left.identifier,
+                    ret_const
+                )
+                return ret_const
+        
+        elif operator == "-=":
+            if left.child.tag == "Identifier":
+                right_const = self.evaluate(right, line_number)
+                left_const = self.scope.get_const(left.identifier)
+                ret_const = Constant.subt(left_const, right_const)
+                self.scope.history.assign(
+                    left.identifier,
+                    ret_const
+                )
+                return ret_const
+        
+        elif operator == "*=":
+            if left.child.tag == "Identifier":
+                right_const = self.evaluate(right, line_number)
+                left_const = self.scope.get_const(left.identifier)
+                ret_const = Constant.mult(left_const, right_const)
+                self.scope.history.assign(
+                    left.identifier,
+                    ret_const
+                )
+                return ret_const
+        
+        elif operator == "&=":
+            if left.child.tag == "Identifier":
+                right_const = self.evaluate(right, line_number)
+                left_const = self.scope.get_const(left.identifier)
+                ret_const = Constant.and(left_const, right_const)
+                self.scope.history.assign(
+                    left.identifier,
+                    ret_const
+                )
+                return ret_const
+        
+        elif operator == "|=":
+            if left.child.tag == "Identifier":
+                right_const = self.evaluate(right, line_number)
+                left_const = self.scope.get_const(left.identifier)
+                ret_const = Constant.or(left_const, right_const)
+                self.scope.history.assign(
+                    left.identifier,
+                    ret_const
+                )
+                return ret_const
+        
+        elif operator == "^=":
+            if left.child.tag == "Identifier":
+                right_const = self.evaluate(right, line_number)
+                left_const = self.scope.get_const(left.identifier)
+                ret_const = Constant.xor(left_const, right_const)
+                self.scope.history.assign(
+                    left.identifier,
+                    ret_const
+                )
+                return ret_const
