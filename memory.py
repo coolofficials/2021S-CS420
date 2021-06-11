@@ -1,11 +1,11 @@
-MAX_SPACE = 40
-print_size = 20
-data_blank = '*'        # form of blank data (string currently) # TODO #1: change into appropriate data form
-debugging = True        # print arguments for errors
-debugging2 = True       # print arguments before some function returns
+MAX_SPACE = 1000
+print_size = 50
+data_blank = '*'        # form of blank data (string currently) # TODO #1: change into better data form
+debugging = False       # print arguments for errors
+debugging2 = False      # print arguments before some function returns
 debugging3 = False      # memory tracking
 base_address = 0x100000 # base address of virtual memory space
-VM_size = MAX_SPACE * 100
+VM_size = MAX_SPACE * 100   # max_size of virtual memory space
 
 
 class Heap:
@@ -114,7 +114,7 @@ class Heap:
         if debugging3:
             print("offset : {} right?\n".format(off))
 
-        # Memory defragmentation    # TODO #2 : use heap maybe..?
+        # Memory defragmentation    # TODO #2 : better algorithm required
         while zero_point != -1 and off < MAX_SPACE:
             if self.table[off] == 1:
                 # find var information in offset 'off'
@@ -156,6 +156,7 @@ class Heap:
             else:
                 off += 1    # check next offset
 
+        print("defragmentation operated")
         return self.find_off(size)      # find memory space with size 'size' again to allocate
 
     def find_addr(self, size):       # find offset in self.data with continuously empty 'size' size memory
@@ -176,6 +177,8 @@ class Heap:
 
     def find_off(self, size):       # find offset in self.data with continuously empty 'size' size memory
         count = 0
+        if MAX_SPACE - self.size < size:
+            return -1
 
         for i in range(MAX_SPACE):
             if self.table[i] == 0:
@@ -194,17 +197,18 @@ class Heap:
         return self.dynamic_allocation(size)    # if there is no enough space, do dynamic_allocation()
 
     def malloc(self, size):    # allocate memory to var
-        if size < 0 or size > MAX_SPACE:
+        if size < 0:
+            print("size_t should be a positive integer")
+            return 0
+        elif size > MAX_SPACE:
             if debugging:
-                print("size error\n")
+                print("malloc size bigger than 1kb\n")
             return 0
 
         # get offset of memory space to allocate to var
         off = self.find_off(size)
         if off == -1:
-            if debugging:
-                print("no more memory space is available..!\n")
-                self.mem()
+            print("Out of memory")
             return 0
 
         # register var to dic
@@ -225,9 +229,8 @@ class Heap:
 
     def free(self, var):    # free memory for var
         if var not in self.dic:
-            if debugging:
-                print("no such var error\n")
-            return -1
+            print("not allocated address")
+            return 0
 
         off, size = self.dic[var]
         if debugging2:
@@ -246,7 +249,7 @@ class Heap:
         return 1
 
     def mem(self):      # print total allocated memory count and size
-        print("Dynamic allocation : {}, {}\n".format(self.count, self.size))
+        print("Dynamic allocation : {}, {}".format(self.count, self.size))
 
     def print_table(self):  # print self.table just for debugging
         count = 0
