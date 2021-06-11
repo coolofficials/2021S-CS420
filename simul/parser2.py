@@ -60,6 +60,7 @@ class Declaration:
         self.type
         self.identifier
         self.size
+        self.tag = "Declaration"
 
     # type = {"int", "float"}, identifier: consider naming convention, size: if any (default: None).
     def parse(self, type, identifier, size):
@@ -75,6 +76,7 @@ class Declaration:
 class Return:
     def __init__(self):
         self.expr
+        self.tag = "Return"
 
     # expr: as string.
     def parse(self, expr):
@@ -90,6 +92,7 @@ class If:
         self.condition = []
         self.then = []
         self.else = []
+        self.tag = "If"
 
     def parse(self, condition, then, else):
         self.condition = Statement().parse(condition)
@@ -109,6 +112,7 @@ class For:
         self.condition
         self.step
         self.statements = []
+        self.tag = "For"
 
     def parse(self, initializer, condition, step, statements):
         self.initializer = Statement().parse(initializer)
@@ -132,6 +136,7 @@ class Function:
         self.identifier
         self.parameters = []
         self.statements = []
+        self.tag = "Function"
 
     def parse(self, type, identifier, parameters, statements):
         if type not in {"int", "float"}:

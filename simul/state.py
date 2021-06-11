@@ -56,11 +56,11 @@ class State:
             else:
                 # change of control flow
                 scope, ip, statements = self.goback.pop()
-                self.scope = scope.deepcopy(-1)
-                self.ip = ip
-                self.statements = statements
+                scope_out = scope.deepcopy(-1)
+                ip = ip
+                statements = statements
                 
-                stmt = self.statements[self.ip]
+                stmt = statements[ip]
                 if (stmt.tag == "for"):
                     # finished iteration of [initializer] or body + [step]
                     # evaluate condition and set ip and scope appropriately
@@ -73,32 +73,31 @@ class State:
                     
                     forblk = stmt
                     if bool(self.evaluate(forblk.condition, stmt.line_number)):
-                        self.goback.append(
-                            (self.scope.deepcopy(1), self.ip, list(self.statements))
-                        )
                         self.ip = 0
                         self.statements = forblk.body + [forblk.step]
                     else:
-                        self.ip += 1
+                        self.scope = scope_out
+                        self.statements = statements
+                        self.ip = ip + 1
                 # TODO: Other cases
     
     def execute_stmt(self, stmt, aux = None):
         chld = stmt.child
-        if (chld.tag == "function"):
+        if (chld.tag == "Function"):
             function = chld
             self.ftable.define(
                 function,
                 self.scope
             )
         
-        elif (chld.tag == "declaration"):
+        elif (chld.tag == "Declaration"):
             decl = chld
             self.scope.history.declare(
                 decl.identifier,
                 decl.type
             )
         
-        elif (chld.tag == "assignment"):
+        elif (chld.tag == "Assignment"):
             asgn = chld
             self.scope.history.assign(
                 asgn.identifier,
@@ -106,11 +105,18 @@ class State:
                 asgn.line_number
             )
         
-        elif (chld.tag == "for"):
-            forblk = stmt
-            init = forblk.initializer
-            loop = forblk.body + [forblk.step]
-            condition = forblk.condition
+        elif (chld.tag == "For"):
+            forblk = chld
+            self.goback.append(
+                (self.scope.deepcopy(0), self.ip, list(self.statements))
+            )
+            self.scope = self.scope.deepcopy(1)
+            self.statements = [forblk.initializer]
+            self.ip = 0
+        
+        elif (chld.tag == "If"):
+            ifblk = stmt
+            condition = ifblk.condition
     
     def evaluate(self, expression, line_number):
         chld = expression.child
@@ -438,3 +444,6 @@ class State:
                     ret_const
                 )
                 return ret_const
+    
+    def eval_functioncall(self, function_call, line_number):
+        function_call
