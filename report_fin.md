@@ -1,3 +1,49 @@
+# CS420 Term Project Final Report
+
+### 20130117 Kim, Siwon. 20150608 Lee, Jun Hyeong. 20160625 Cho, Min Jun.
+
+## Project Design
+
+We have written two separate programs to interpret the input code: the Pasrer and the Runtime Simulator.       
+The Interpreter parses through the input code, written in the Mini-C language. If the input code has no syntactical errors, it will be converted into an AST structure.     
+The AST structure is passed on to the AST Parser, which will simulate and demonstrate the "runtime" environment of the input code, according to the command line inputs.
+
+## Parser
+
+### Fully implemented AST (parser2.py).
+`AST(code: raw c code)` will return list of abstract syntax trees having each statements as a root node.
+
+#### Not yet implemented features
+
+Printf  
+FunctionCall  
+Binary&UnaryOp -> remove whitespaces between operator characters will correct every errors. 
+
+## Runtime Simulator (Debugger)
+
+### State
+
+The Runtime Simulator maintains the information used to simulate the Runtime in a `State` object. The `State` keeps track of the following members:
+
+* The `Scope`, which consists of the `History` of declared variables, and the `Function Table` of declared functions.
+  * The `History` is the table of declared variables in a given *Scope*. Each entry must hold the variable identifier and the records of all the value assignments that were done to it. Each record of value assignment must hold its line number and the assigned value.
+  * The `Function Table` is the list of declared functions in a given *Scope*. Each entry must hold the function identifier and a function context.
+* The `Heap`, which is holds the state of the dynamically allocated memory space. The `malloc` and `free` function calls in the input code will alter the *Heap* state.
+* `statements`, which is the list of statements (instructions) to execute, in sequential order.
+* `ip`, which indicates the next statement among *statements* to execute.
+* `goback`, which is a queue of `Scope`, `ip`, and `statements`. These data are utilized to handle change in control flow.
+
+The code for the above features would be as below:
+
+    class State:
+    def __init__(self, statements):
+        self.scope = Scope() # consists of History and FunctionTable
+        self.heap = Heap()
+        self.statements = statements
+        self.ip = 0
+        self.goback = deque()
+
+
 ## Runtime Simulator (Debugger)
 
 ### State
