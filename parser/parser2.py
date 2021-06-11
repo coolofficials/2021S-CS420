@@ -420,7 +420,12 @@ class Expression:
             else:
                 self.child = Identifier().parse(expr[0])
 
-        # TODO: handle function call.
+        elif expr[-1] == ")":
+            identifier = expr[0]
+            if expr[1] != "(":
+                syntaxError
+            else:
+                arguments = getStatements(whitespace.join(expr[2:-1]))
 
         else:
             SyntaxError()
