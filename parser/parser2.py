@@ -22,20 +22,22 @@ class CodeBlock:
     # Return index of end char of first word of CodeBlock.
     def getFirstWordIdx(self):
         index = 0
-        while self.code[index] != " ":
+        while self.code[index] != " " and index < len(self.code):
             index += 1
         return index - 1
 
     # Return index and character of next character from input index.
-    # TODO: EOC?
     def getNextChar(self, index):
         index += 1
+        if index > len(self.code):
+            syntaxError()
         while self.code[index] == " ":
             index += 1
+        if index > len(self.code):
+            syntaxError()
         return {"idx": index, "char": self.code[index]}
 
     # Return next word and last index of it.
-    # TODO: EOC?
     def getNextWord(self, index):
         index += 1
         while self.code[index] == " ":
@@ -44,8 +46,12 @@ class CodeBlock:
             syntaxError()
         start = index
         index += 1
+        if index > len(self.code):
+            syntaxError()
         while self.code[index] != " ":
             index += 1
+        if index > len(self.code):
+            syntaxError()
         return {"idx": index - 1, "word": self.code[start, index]}
 
     # Note that this method is vague but enough for our implementation.
@@ -84,7 +90,7 @@ class CodeBlock:
 class Statement:
     def __init__(self):
         self.tag = "Statement"
-        self.child = Expression()
+        self.child = None
 
     # Parse into sub-types.
     # Make class code and make parentheses matching by index of opening, and keyword.
@@ -194,7 +200,7 @@ class Statement:
 class Expression:
     def __init__(self):
         self.tag = "Expression"
-        self.child
+        self.child = None
 
     # Parse into sub-types.
     # Get expr as list of words(tokens).
@@ -224,9 +230,9 @@ class Expression:
 class Declaration:
     def __init__(self):
         self.tag = "Declaration"
-        self.type
-        self.identifier
-        self.size
+        self.type = None
+        self.identifier = None
+        self.size = None
 
     # type = {"int", "float"}, identifier: consider naming convention, size: if any (default: None).
     # Check whether if size is integer or not.
@@ -243,7 +249,7 @@ class Declaration:
 class Return:
     def __init__(self):
         self.tag = "Return"
-        self.expr
+        self.expr = None
 
     # expr: as string.
     def parse(self, expr):
@@ -257,7 +263,7 @@ class Return:
 class If:
     def __init__(self):
         self.tag = "If"
-        self.condition
+        self.condition = None
         self.then = []
         self.else_ = []
 
@@ -276,9 +282,9 @@ class If:
 class For:
     def __init__(self):
         self.tag = "For"
-        self.initializer
-        self.condition
-        self.step
+        self.initializer = None
+        self.condition = None
+        self.step = None
         self.statements = []
 
     def parse(self, initializer, condition, step, statements):
@@ -300,8 +306,8 @@ class For:
 class Function:
     def __init__(self):
         self.tag = "Function"
-        self.type
-        self.identifier
+        self.type = None
+        self.identifier = None
         self.parameters = []
         self.statements = []
 
@@ -335,10 +341,10 @@ class Function:
 class UnaryOp:
     def __init__(self):
         self.tag = "UnaryOp"
-        self.operator
+        self.operator = None
 
         # Statement(Expression)
-        self.operand
+        self.operand = None
 
         self.is_lvalue = False
 
@@ -364,9 +370,9 @@ class UnaryOp:
 class BinaryOp:
     def __init__(self):
         self.tag = "BinaryOp"
-        self.operator
-        self.lhs
-        self.rhs
+        self.operator = None
+        self.lhs = None
+        self.rhs = None
         self.is_lvalue = False
 
     def parse(self, operator, lhs, rhs):
@@ -413,7 +419,7 @@ class BinaryOp:
 class FunctionCall:
     def __init__(self):
         self.tag = "FunctionCall"
-        self.name
+        self.name = None
         self.arguments = []
         self.is_lvalue = False
 
@@ -438,7 +444,7 @@ class FunctionCall:
 class Identifier:
     def __init__(self):
         self.tag = "Identifier"
-        self.name
+        self.name = None
         self.is_lvalue = True
 
     def parse(self, name):
@@ -455,8 +461,8 @@ class Identifier:
 class Constant:
     def __init__(self):
         self.tag = "Constant"
-        self.type
-        self.value
+        self.type = None
+        self.value = None
         self.is_lvalue = False
 
     def parse(self, constant):
