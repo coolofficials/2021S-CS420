@@ -1,10 +1,66 @@
-# Abort Printf, Free, Malloc.
+# TODO: Printf
 
 # -----------------------------------------------------------------------------------------------
 # Helper functions.
 # TODO: Temporary error_handler.
 def syntaxError():
     pass
+
+
+# A helper for lexing.
+# Wrap code into class CodeBlock.
+# TODO: break down into a list of statements.
+class CodeBlock:
+    def __init__(self, code):
+        # Store CodeBlock without leading & trailing whitespaces.
+        self.code = code.strip()
+
+    # Return first word of CodeBlock.
+    def getFirstWord(self):
+        return self.code.split(" ")[0]
+
+    # Return index of end char of first word of CodeBlock.
+    def getFirstWordIdx(self):
+        index = 0
+        while self.code[index] != " ":
+            index += 1
+        return index - 1
+
+    # Return index and character of next character from input index.
+    # TODO: EOC?
+    def getNextChar(self, index):
+        index += 1
+        while self.code[index] == " ":
+            index += 1
+        return {"idx": index, "char":self.code[index]}
+
+    # Return next word and last index of it.
+    # TODO: EOC?
+    def getNextWord(self, index):
+        index += 1
+        while self.code[index] == " ":
+            index += 1
+        start = index
+        index += 1
+        while self.code[index] != " ":
+            index += 1
+        return {"idx": index - 1, "word": self.code[start, index]}
+
+    # Note that this method is vague but enough for our implementation.
+    # To be precise, check {, (, [ in different way. 
+    def parenthesesMatching(self, index):
+        if not self.code[index] in {"{", "(", "["}:
+            print("Not a parentheses")
+        depth = 1
+        index += 1
+        while depth > 0:
+            if self.code[index] in {"{", "(", "["}:
+                depth += 1
+            elif self.code[index] in {"}", ")", "]"}:
+                depth -= 1
+            index += 1
+        
+        return index - 1
 
 
 # -----------------------------------------------------------------------------------------------
@@ -16,6 +72,7 @@ def syntaxError():
 # If: if (condition: expr) {then stmts} else(if any) {else stmts}
 # For: for (initializer: expr; condition: expr; step: expr) {stmts}
 # Function: type("int", "float") identifier (params: declaration) {stmt}
+# Expression: Expressions.
 # -----------------------------------------------------------------------------------------------
 
 class Statement:
@@ -23,9 +80,99 @@ class Statement:
         self.tag = "Statement"
         self.child = Expression()
     
-    # TODO: Parse into sub-types.
-    def parse(self, code):
-        return self
+    # Parse into sub-types.
+    # Make class code and make parentheses matching by index of opening, and keyword.
+    def parse(self, statement):
+        stmt = CodeBlock(statement)
+
+        # if-else control flow.
+        # if (condition) {statements} else {statements}.
+        # No 'else if', but nested if-else allowed.
+        if stmt.getFirstWord() == "if":
+            # A pivot tracing statement.
+            # Searching for condition.
+            next = stmt.getNextChar(stmt.getFirstWordIdx())
+            if next["char"] != "(":
+                syntaxError()
+            cond_start = next["idx"]
+            cond_end = stmt.parenthesesMatching(cond_start)
+            condition = stmt.code[cond_start+1, cond_end]
+
+            # Searching for then statement.
+            # TODO: break down into list of statements.
+            next = stmt.getNextChar(cond_end)
+            if next["char"] != "{":
+                syntaxError()
+            then_start = next["idx"]
+            then_end = stmt.parenthesesMatching(then_start)
+            then = stmt.code[then_start + 1, then_end]
+            
+            # Searching for else statement.
+            # TODO: break down into list of statements.
+            next = stmt.getNextWord(then_end)
+            if next["word"] != "else":
+                else = None
+                # If there are something after then statements other than else, raise error. 
+                if then_end != len(stmt.code) - 1:
+                    syntaxError()
+            else:
+                next = stmt.getNextChar(next["idx"])
+                if next["char"] != "{":
+                    syntaxError()
+                else_start = next["idx"]
+                else_end = stmt.parenthesesMatching(else_start)
+                else = stmt.code[else_start + 1, else_end]
+
+                # if there are something after else statements, raise error.
+                if else_end != len(stmt.code) - 1:
+                    syntaxError()
+
+            self.child = If().parse(condition, then, else)
+
+        # return expr;
+        elif stmt.getFirstWord() == "return":
+            if stmt.code[-1] != ";":
+                syntaxError()
+            expr = stmt.code[stmt.getNextChar(stmt.getFirstWordIdx())["idx"]:]
+            self.child = Return().parse(expr)
+        
+        # Function or Declaration.
+        elif stmt.getFirstWord() in {"int", "float"}:
+            type = stmt.getFirstWord()
+
+            # Declartion: type identifier; or type identifier [size] ;
+            if stmt.code[-1] == ";":
+                next = stmt.getNextWord(stmt.getFirstWordIdx())
+                identifier = next["word"]
+                next = stmt.getNextChar(next["idx"])
+                if next["char"] == ";":
+                    if next["idx"] != len(stmt.code)-1:
+                        syntaxError()
+                    size = 0
+                elif next["char"] == "[":
+                    size_end = stmt.parenthesesMatching(next["idx"])
+                    size = stmt.code[next["idx"]+1, size_end]
+                    
+                    # If there are something after size, raise error.
+                    next = stmt.getNextChar(size_end)
+                    if next["char"] != ";":
+                        syntaxError()
+                    if next["idx"] != len(stmt.code)-1:
+                        syntaxError()
+
+                else:
+                    syntaxError()
+                
+                self.child = Declaration(type, identifier, size)
+                    
+                
+                
+            # Function: type identifier (arguments) {statements}
+            elif stmt.code[-1] == "}":
+                identifier = stmt.getNextWord(stmt.getFirstWordIdx())["word"]
+
+        pass
+
 
 # Expressions: Calculations (UnaryOp, BinaryOp) / Factors (Identifier, FunctionCall, Constant)
 # Precedence.
@@ -35,6 +182,9 @@ class Expression:
         self.child
 
     # Parse into sub-types.
+    # Get expr as list of words(tokens).
+    # 0) wrap () into a token.
+    # 1) Detect operator and types.
     def parse(self, expr):
         # TODO: Temporary assignment of sub-types.
         if expr == "UnaryOp":
@@ -58,23 +208,26 @@ class Expression:
 
 class Declaration:
     def __init__(self):
+        self.tag = "Declaration"
         self.type
         self.identifier
         self.size
 
     # type = {"int", "float"}, identifier: consider naming convention, size: if any (default: None).
+    # Check whether if size is integer or not.
     def parse(self, type, identifier, size):
         if type not in {"int", "float"}:
             syntaxError()
         self.type = type
         self.identifier = Identifier().parse(identifier)
-        self.size = size
+        self.size = Statement().parse(size)
 
         return self
 
 
 class Return:
     def __init__(self):
+        self.tag = "Return"
         self.expr
 
     # expr: as string.
@@ -88,6 +241,7 @@ class Return:
 
 class If:
     def __init__(self):
+        self.tag = "If"
         self.condition
         self.then = []
         self.else = []
@@ -106,6 +260,7 @@ class If:
 
 class For:
     def __init__(self):
+        self.tag = "For"
         self.initializer
         self.condition
         self.step
@@ -129,6 +284,7 @@ class For:
 
 class Function:
     def __init__(self):
+        self.tag = "Function"
         self.type
         self.identifier
         self.parameters = []
@@ -226,10 +382,10 @@ class BinaryOp:
             ">>=",
         }:
             if not self.lhs.child.is_lvalue():
-                    syntaxError()
+                syntaxError()
             self.is_lvalue = False
             
-        # TODO: Handle index after... use size? -> runtime.
+        # Size check in runtime.
         if operator == "index":
             if not self.lhs.child.is_lvalue():
                 syntaxError()
