@@ -32,7 +32,7 @@ class CodeBlock:
         index += 1
         while self.code[index] == " ":
             index += 1
-        return {"idx": index, "char":self.code[index]}
+        return {"idx": index, "char": self.code[index]}
 
     # Return next word and last index of it.
     # TODO: EOC?
@@ -40,6 +40,8 @@ class CodeBlock:
         index += 1
         while self.code[index] == " ":
             index += 1
+        if index > len(self.code):
+            syntaxError()
         start = index
         index += 1
         while self.code[index] != " ":
@@ -47,7 +49,7 @@ class CodeBlock:
         return {"idx": index - 1, "word": self.code[start, index]}
 
     # Note that this method is vague but enough for our implementation.
-    # To be precise, check {, (, [ in different way. 
+    # To be precise, check {, (, [ in different way.
     def parenthesesMatching(self, index):
         if not self.code[index] in {"{", "(", "["}:
             print("Not a parentheses")
@@ -59,7 +61,10 @@ class CodeBlock:
             elif self.code[index] in {"}", ")", "]"}:
                 depth -= 1
             index += 1
-        
+
+        if index > len(self.code):
+            syntaxError()
+
         return index - 1
 
 
@@ -75,11 +80,12 @@ class CodeBlock:
 # Expression: Expressions.
 # -----------------------------------------------------------------------------------------------
 
+
 class Statement:
     def __init__(self):
         self.tag = "Statement"
         self.child = Expression()
-    
+
     # Parse into sub-types.
     # Make class code and make parentheses matching by index of opening, and keyword.
     def parse(self, statement):
@@ -96,7 +102,7 @@ class Statement:
                 syntaxError()
             cond_start = next["idx"]
             cond_end = stmt.parenthesesMatching(cond_start)
-            condition = stmt.code[cond_start+1, cond_end]
+            condition = stmt.code[cond_start + 1, cond_end]
 
             # Searching for then statement.
             # TODO: break down into list of statements.
@@ -106,13 +112,13 @@ class Statement:
             then_start = next["idx"]
             then_end = stmt.parenthesesMatching(then_start)
             then = stmt.code[then_start + 1, then_end]
-            
+
             # Searching for else statement.
             # TODO: break down into list of statements.
             next = stmt.getNextWord(then_end)
             if next["word"] != "else":
-                else = None
-                # If there are something after then statements other than else, raise error. 
+                else_ = None
+                # If there are something after then statements other than else, raise error.
                 if then_end != len(stmt.code) - 1:
                     syntaxError()
             else:
@@ -121,21 +127,21 @@ class Statement:
                     syntaxError()
                 else_start = next["idx"]
                 else_end = stmt.parenthesesMatching(else_start)
-                else = stmt.code[else_start + 1, else_end]
+                else_ = stmt.code[else_start + 1, else_end]
 
                 # if there are something after else statements, raise error.
                 if else_end != len(stmt.code) - 1:
                     syntaxError()
 
-            self.child = If().parse(condition, then, else)
+            self.child = If().parse(condition, then, else_)
 
         # return expr;
         elif stmt.getFirstWord() == "return":
             if stmt.code[-1] != ";":
                 syntaxError()
-            expr = stmt.code[stmt.getNextChar(stmt.getFirstWordIdx())["idx"]:]
+            expr = stmt.code[stmt.getNextChar(stmt.getFirstWordIdx())["idx"] :]
             self.child = Return().parse(expr)
-        
+
         # Function or Declaration.
         elif stmt.getFirstWord() in {"int", "float"}:
             type = stmt.getFirstWord()
@@ -146,30 +152,39 @@ class Statement:
                 identifier = next["word"]
                 next = stmt.getNextChar(next["idx"])
                 if next["char"] == ";":
-                    if next["idx"] != len(stmt.code)-1:
+                    if next["idx"] != len(stmt.code) - 1:
                         syntaxError()
                     size = 0
                 elif next["char"] == "[":
                     size_end = stmt.parenthesesMatching(next["idx"])
-                    size = stmt.code[next["idx"]+1, size_end]
-                    
+                    size = stmt.code[next["idx"] + 1, size_end]
+
                     # If there are something after size, raise error.
                     next = stmt.getNextChar(size_end)
                     if next["char"] != ";":
                         syntaxError()
-                    if next["idx"] != len(stmt.code)-1:
+                    if next["idx"] != len(stmt.code) - 1:
                         syntaxError()
 
                 else:
                     syntaxError()
-                
-                self.child = Declaration(type, identifier, size)
-                    
-                
-                
-            # Function: type identifier (arguments) {statements}
+
+                self.child = Declaration().parse(type, identifier, size)
+
+            # Function: type identifier (parameters) {statements}
             elif stmt.code[-1] == "}":
-                identifier = stmt.getNextWord(stmt.getFirstWordIdx())["word"]
+                next = stmt.getNextWord(stmt.getFirstWordIdx())
+                identifier = next["word"]
+                next = stmt.getNextChar(next["idx"])
+
+                # No params following identifier, raise error.
+                if next["char"] != "(":
+                    syntaxError()
+
+                param_start = next["idx"]
+                param_end = stmt.parenthesesMatching(param_start)
+                # TODO: breakdown stmts.
+                parameters = stmt.code[param_start + 1, param_end]
 
         pass
 
@@ -244,17 +259,17 @@ class If:
         self.tag = "If"
         self.condition
         self.then = []
-        self.else = []
+        self.else_ = []
 
-    def parse(self, condition, then, else):
+    def parse(self, condition, then, else_):
         self.condition = Statement().parse(condition)
         if self.condition.child.tag != "Expression":
             syntaxError()
         for stmt in then:
             self.then.append(Statement().parse(stmt))
-        for stmt in else:
-            self.else.append(Statement().parse(stmt))
-        
+        for stmt in else_:
+            self.else_.append(Statement().parse(stmt))
+
         return self
 
 
@@ -302,7 +317,7 @@ class Function:
             self.parameters.append(parameter)
         for stmt in statements:
             self.statements.append(Statement().parse(stmt))
-            
+
         return self
 
 
@@ -334,7 +349,7 @@ class UnaryOp:
         if self.operand.child.tag != "Expression":
             syntaxError()
 
-        if operator in  {"pre++", "pre--", "post++", "post--", "&"}:
+        if operator in {"pre++", "pre--", "post++", "post--", "&"}:
             if not self.operand.child.is_lvalue():
                 syntaxError()
 
@@ -384,7 +399,7 @@ class BinaryOp:
             if not self.lhs.child.is_lvalue():
                 syntaxError()
             self.is_lvalue = False
-            
+
         # Size check in runtime.
         if operator == "index":
             if not self.lhs.child.is_lvalue():
@@ -454,4 +469,6 @@ class Constant:
             self.type = "int"
 
         return self
+
+
 # -----------------------------------------------------------------------------------------------
