@@ -1,5 +1,7 @@
 import copy
 
+from parser2 import *
+
 class FunctionTableEntry:
     def __init__(self, id, return_type, line_number, parameters, statements):
         self.id = id
@@ -14,11 +16,12 @@ class FunctionTable:
         self.table = list()
     
     def define(self, function, scope):
+        if function.id in self.table: raise RuntimeError()
         fte = FunctionTableEntry(
             function.id,
             function.return_type,
             function.line_number,
-            function.parameters,
+            function.parameters, # Declarations
             function.statements,
         )
         # copy scope at definition; recursion is not possible
@@ -41,12 +44,10 @@ class FunctionTable:
                 raise RuntimeError(None)
             
             else:
-                scope = copy.deepcopy(func.scope)
+                args = list(arguments)
                 for (argument, parameter) in zip(arguments, func.parameters):
-                    if argument.type != parameter.type:
-                        # might be parameter[1]; depends on AST implementation
-                        raise RuntimeError(None)
+                    args.append(Constant.totype(argument, parameter.child.type))
                 
                 # function scope is returned "as is"
                 # parameter values should be assigned by caller
-                return func.scope, func.return_type, func.line_number, func.parameters, func.statements
+                return func.scope, func.return_type, func.parameters, args, func.statements

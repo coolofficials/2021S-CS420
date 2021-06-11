@@ -465,4 +465,24 @@ class State:
                 return ret_const
     
     def eval_functioncall(self, function_call, line_number):
-        function_call
+        fname = function_call.name
+        fargs = function_call.arguments
+        if fname == "malloc":
+            if len(fargs) != 1: raise RuntimeError()
+            if fargs[0].type != "int": raise RuntimeError()
+            # TODO: call function in memory module
+        
+        elif fname == "free":
+            if len(fargs) != 1: raise RuntimeError()
+            # TODO: call function in memory module
+        
+        else:
+            fargs = [self.evaluate(farg.child) for farg in fargs]
+            scope, return_type, parameters, args, statements = self.scope.ftable.call(fname, fargs)
+            scope = scope.deepcopy(1)
+            for parameter, arg in zip(parameters, args):
+                param_id = parameter.child.identifier
+                param_type = parameter.child.type
+                scope.history.declare(param_id, param_type)
+                scope.history.assign(param_id, arg, line_number)
+            # TODO: control flow change

@@ -385,4 +385,17 @@ class Constant:
             "int",
             int(const_a.value ^ const_b.value)
         )
+    
+    def totype(const_subj, const_std):
+        if const_subj.type == const_std.type: return const_subj
+        elif const_subj.type == "int" and const_std.type == "float":
+            return Constant(
+                "float",
+                float(const_subj.value)
+            )
+        elif const_subj.type == "float" and const_std.type == "int":
+            return Constant(
+                "int",
+                int(const_subj.value)
+            )
 # -----------------------------------------------------------------------------------------------
