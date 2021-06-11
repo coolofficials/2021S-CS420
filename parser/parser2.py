@@ -74,6 +74,10 @@ class CodeBlock:
         return index - 1
 
 
+def getStatements(code):
+    pass
+
+
 # -----------------------------------------------------------------------------------------------
 # Sub-types of Statements.
 # -----------------------------------------------------------------------------------------------
@@ -111,16 +115,14 @@ class Statement:
             condition = stmt.code[cond_start + 1, cond_end]
 
             # Searching for then statement.
-            # TODO: break down into list of statements.
             next = stmt.getNextChar(cond_end)
             if next["char"] != "{":
                 syntaxError()
             then_start = next["idx"]
             then_end = stmt.parenthesesMatching(then_start)
-            then = stmt.code[then_start + 1, then_end]
+            then = getStatements(stmt.code[then_start + 1, then_end])
 
             # Searching for else statement.
-            # TODO: break down into list of statements.
             next = stmt.getNextWord(then_end)
             if next["word"] != "else":
                 else_ = None
@@ -133,7 +135,7 @@ class Statement:
                     syntaxError()
                 else_start = next["idx"]
                 else_end = stmt.parenthesesMatching(else_start)
-                else_ = stmt.code[else_start + 1, else_end]
+                else_ = getStatements(stmt.code[else_start + 1, else_end])
 
                 # if there are something after else statements, raise error.
                 if else_end != len(stmt.code) - 1:
@@ -190,9 +192,48 @@ class Statement:
                 param_start = next["idx"]
                 param_end = stmt.parenthesesMatching(param_start)
                 # TODO: breakdown stmts.
-                parameters = stmt.code[param_start + 1, param_end]
+                parameters = getStatements(stmt.code[param_start + 1, param_end])
+                next = stmt.getNextChar(param_end)
+                if next["char"] != "{":
+                    syntaxError()
 
-        pass
+                body_start = next["idx"]
+                body_end = stmt.parenthesesMatching(body_start)
+                body = getStatements(stmt.code[body_start + 1, body_end])
+                if body_end != len(stmt.code) - 1:
+                    syntaxError()
+
+                self.child = Function().parse(type, identifier, parameters, body)
+
+        # For control flow.
+        elif stmt.getFirstWord() == "for":
+            next = stmt.getNextChar(stmt.getFirstWordIdx())
+            if next["char"] != "(":
+                syntaxError()
+            for_states_start = next["idx"]
+            for_states_end = stmt.parenthesesMatching(for_states_start)
+            for_states = getStatements(stmt.code[for_states_start + 1, for_states_end])
+            if len(for_states) != 3:
+                syntaxError()
+            initializer = for_states[0]
+            condition = for_states[1]
+            step = for_states[2]
+            next = stmt.getNextChar(for_states_end)
+            if next["char"] != "{":
+                syntaxError()
+
+            body_start = next["idx"]
+            body_end = stmt.parenthesesMatching(body_start)
+            body = getStatements(stmt.code[body_start + 1, body_end])
+            if body_end != len(stmt.code) - 1:
+                syntaxError()
+
+            self.child = For().parse(initializer, condition, step, body)
+
+        else:
+            self.child = Expression().parse(stmt.code)
+
+        return self
 
 
 # Expressions: Calculations (UnaryOp, BinaryOp) / Factors (Identifier, FunctionCall, Constant)
