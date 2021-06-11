@@ -1,15 +1,16 @@
+import re
+
 # TODO: Printf
 
 # -----------------------------------------------------------------------------------------------
 # Helper functions.
-# TODO: Temporary error_handler.
+# Custom error handler
 def syntaxError():
-    pass
+    raise SyntaxError
 
 
 # A helper for lexing.
 # Wrap code into class CodeBlock.
-# TODO: break down into a list of statements.
 class CodeBlock:
     def __init__(self, code):
         # Store CodeBlock without leading & trailing whitespaces.
@@ -22,32 +23,40 @@ class CodeBlock:
     # Return index of end char of first word of CodeBlock.
     def getFirstWordIdx(self):
         index = 0
-        while self.code[index] != " ":
+        while self.code[index] != " " and index < len(self.code):
             index += 1
         return index - 1
 
     # Return index and character of next character from input index.
-    # TODO: EOC?
     def getNextChar(self, index):
         index += 1
+        if index > len(self.code):
+            syntaxError()
         while self.code[index] == " ":
             index += 1
-        return {"idx": index, "char":self.code[index]}
+        if index > len(self.code):
+            syntaxError()
+        return {"idx": index, "char": self.code[index]}
 
     # Return next word and last index of it.
-    # TODO: EOC?
     def getNextWord(self, index):
         index += 1
         while self.code[index] == " ":
             index += 1
+        if index > len(self.code):
+            syntaxError()
         start = index
         index += 1
+        if index > len(self.code):
+            syntaxError()
         while self.code[index] != " ":
             index += 1
-        return {"idx": index - 1, "word": self.code[start, index]}
+        if index > len(self.code):
+            syntaxError()
+        return {"idx": index - 1, "word": self.code[start:index]}
 
     # Note that this method is vague but enough for our implementation.
-    # To be precise, check {, (, [ in different way. 
+    # To be precise, check {, (, [ in different way.
     def parenthesesMatching(self, index):
         if not self.code[index] in {"{", "(", "["}:
             print("Not a parentheses")
@@ -59,8 +68,57 @@ class CodeBlock:
             elif self.code[index] in {"}", ")", "]"}:
                 depth -= 1
             index += 1
-        
+
+        if index > len(self.code):
+            syntaxError()
+
         return index - 1
+
+
+# Lint to parsable code.
+def lint(code):
+    code = code.replace(",", "; ")
+    code = code.replace("+", " + ")
+    code = code.replace("-", " - ")
+    code = code.replace("=", " = ")
+    code = code.replace("*", " * ")
+    code = code.replace("%", " % ")
+    code = code.replace("/", " / ")
+    code = code.replace("&", " & ")
+    code = code.replace("^", " ^ ")
+    code = code.replace("|", " | ")
+    code = code.replace("{", " {")
+    code = code.replace("(", " (")
+    code = code.replace(";", " ;")
+    code = code.replace("[", " [")
+    # TODO: remove whitespace between operators = {"+", "-", "=", "*", "&", "%", "^", "/", "|"}
+
+    return code
+
+
+# Break down strings into statements.
+def getStatements(code):
+    code = lint(code)
+    depth_count = 0
+    index = 0
+    stmt = ""
+    statements = []
+    while index < len(code):
+        stmt += code[index]
+        if code[index] in {"(", "{"}:
+            depth_count += 1
+        if code[index] in {")", "}"}:
+            depth_count -= 1
+        if code[index] in {";", "}"} and depth_count == 0:
+            statements.append(stmt.strip())
+            stmt = ""
+        index += 1
+    if stmt != "":
+        statements.append(stmt.strip())
+    if depth_count != 0:
+        syntaxError()
+
+    return statements
 
 
 # -----------------------------------------------------------------------------------------------
@@ -75,15 +133,16 @@ class CodeBlock:
 # Expression: Expressions.
 # -----------------------------------------------------------------------------------------------
 
+
 class Statement:
     def __init__(self):
         self.tag = "Statement"
-        self.child = Expression()
-    
+        self.child = None
+
     # Parse into sub-types.
     # Make class code and make parentheses matching by index of opening, and keyword.
     def parse(self, statement):
-        stmt = CodeBlock(statement)
+        stmt = CodeBlock(lint(statement))
 
         # if-else control flow.
         # if (condition) {statements} else {statements}.
@@ -96,23 +155,21 @@ class Statement:
                 syntaxError()
             cond_start = next["idx"]
             cond_end = stmt.parenthesesMatching(cond_start)
-            condition = stmt.code[cond_start+1, cond_end]
+            condition = stmt.code[cond_start + 1 : cond_end]
 
             # Searching for then statement.
-            # TODO: break down into list of statements.
             next = stmt.getNextChar(cond_end)
             if next["char"] != "{":
                 syntaxError()
             then_start = next["idx"]
             then_end = stmt.parenthesesMatching(then_start)
-            then = stmt.code[then_start + 1, then_end]
-            
+            then = getStatements(stmt.code[then_start + 1 : then_end])
+
             # Searching for else statement.
-            # TODO: break down into list of statements.
             next = stmt.getNextWord(then_end)
             if next["word"] != "else":
                 else_ = None
-                # If there are something after then statements other than else, raise error. 
+                # If there are something after then statements other than else, raise error.
                 if then_end != len(stmt.code) - 1:
                     syntaxError()
             else:
@@ -121,7 +178,7 @@ class Statement:
                     syntaxError()
                 else_start = next["idx"]
                 else_end = stmt.parenthesesMatching(else_start)
-                else_ = stmt.code[else_start + 1, else_end]
+                else_ = getStatements(stmt.code[else_start + 1 : else_end])
 
                 # if there are something after else statements, raise error.
                 if else_end != len(stmt.code) - 1:
@@ -133,9 +190,9 @@ class Statement:
         elif stmt.getFirstWord() == "return":
             if stmt.code[-1] != ";":
                 syntaxError()
-            expr = stmt.code[stmt.getNextChar(stmt.getFirstWordIdx())["idx"]:]
+            expr = stmt.code[stmt.getNextChar(stmt.getFirstWordIdx())["idx"] :]
             self.child = Return().parse(expr)
-        
+
         # Function or Declaration.
         elif stmt.getFirstWord() in {"int", "float"}:
             type = stmt.getFirstWord()
@@ -146,32 +203,80 @@ class Statement:
                 identifier = next["word"]
                 next = stmt.getNextChar(next["idx"])
                 if next["char"] == ";":
-                    if next["idx"] != len(stmt.code)-1:
+                    if next["idx"] != len(stmt.code) - 1:
                         syntaxError()
                     size = 0
                 elif next["char"] == "[":
                     size_end = stmt.parenthesesMatching(next["idx"])
-                    size = stmt.code[next["idx"]+1, size_end]
-                    
+                    size = stmt.code[next["idx"] + 1 : size_end]
+
                     # If there are something after size, raise error.
                     next = stmt.getNextChar(size_end)
                     if next["char"] != ";":
                         syntaxError()
-                    if next["idx"] != len(stmt.code)-1:
+                    if next["idx"] != len(stmt.code) - 1:
                         syntaxError()
 
                 else:
                     syntaxError()
-                
-                self.child = Declaration(type, identifier, size)
-                    
-                
-                
-            # Function: type identifier (arguments) {statements}
-            elif stmt.code[-1] == "}":
-                identifier = stmt.getNextWord(stmt.getFirstWordIdx())["word"]
 
-        pass
+                self.child = Declaration().parse(type, identifier, size)
+
+            # Function: type identifier (parameters) {statements}
+            elif stmt.code[-1] == "}":
+                next = stmt.getNextWord(stmt.getFirstWordIdx())
+                identifier = next["word"]
+                next = stmt.getNextChar(next["idx"])
+
+                # No params following identifier, raise error.
+                if next["char"] != "(":
+                    syntaxError()
+
+                param_start = next["idx"]
+                param_end = stmt.parenthesesMatching(param_start)
+                parameters = getStatements(stmt.code[param_start + 1 : param_end])
+                next = stmt.getNextChar(param_end)
+                if next["char"] != "{":
+                    syntaxError()
+
+                body_start = next["idx"]
+                body_end = stmt.parenthesesMatching(body_start)
+                body = getStatements(stmt.code[body_start + 1 : body_end])
+                if body_end != len(stmt.code) - 1:
+                    syntaxError()
+
+                self.child = Function().parse(type, identifier, parameters, body)
+
+        # For control flow.
+        elif stmt.getFirstWord() == "for":
+            next = stmt.getNextChar(stmt.getFirstWordIdx())
+            if next["char"] != "(":
+                syntaxError()
+            for_states_start = next["idx"]
+            for_states_end = stmt.parenthesesMatching(for_states_start)
+            print(stmt.code[for_states_start + 1 : for_states_end])
+            for_states = getStatements(stmt.code[for_states_start + 1 : for_states_end])
+            if len(for_states) != 3:
+                syntaxError()
+            initializer = for_states[0]
+            condition = for_states[1]
+            step = for_states[2]
+            next = stmt.getNextChar(for_states_end)
+            if next["char"] != "{":
+                syntaxError()
+
+            body_start = next["idx"]
+            body_end = stmt.parenthesesMatching(body_start)
+            body = getStatements(stmt.code[body_start + 1 : body_end])
+            if body_end != len(stmt.code) - 1:
+                syntaxError()
+
+            self.child = For().parse(initializer, condition, step, body)
+
+        else:
+            self.child = Expression().parse(stmt.code)
+
+        return self
 
 
 # Expressions: Calculations (UnaryOp, BinaryOp) / Factors (Identifier, FunctionCall, Constant)
@@ -186,17 +291,137 @@ class Expression:
     # 0) wrap () into a token.
     # 1) Detect operator and types.
     def parse(self, expr):
-        # TODO: Temporary assignment of sub-types.
-        if expr == "UnaryOp":
-            self.child = UnaryOp().parse()
-        elif expr == "BinaryOp":
-            self.child = BinaryOp().parse(0, 0, 0)
-        elif expr == "FunctionCall":
-            self.child = FunctionCall().parse(0, 0)
-        elif expr == "Identifier":
-            self.child = Identifier().parse(0)
-        elif expr == "Constant":
-            self.child = Constant().parse(0)
+        assignment = {
+            "<=",
+            ">=",
+            "!=",
+            "=",
+            "*=",
+            "+=",
+            "-=",
+            "/=",
+            "%=",
+            "&=",
+            "|=",
+            "^=",
+            "<<=",
+            ">>=",
+        }
+
+        expr = expr.split(" ")
+        i = len(expr)
+        whitespace = " "
+
+        for j in range(i):
+            if expr[i - j] in assignment:
+                lhs = whitespace.join(expr[: i - j])
+                operator = expr[i - j]
+                rhs = whitespace.join(expr[i - j + 1 :])
+                self.child = BinaryOp().parse(operator, lhs, rhs)
+                return self
+
+        for j in range(i):
+            if expr[j] == "||":
+                lhs = whitespace.join(expr[:j])
+                operator = "||"
+                rhs = whitespace.join(expr[j + 1 :])
+                self.child = BinaryOp().parse(operator, lhs, rhs)
+                return self
+
+        for j in range(i):
+            if expr[j] == "&&":
+                lhs = whitespace.join(expr[:j])
+                operator = "&&"
+                rhs = whitespace.join(expr[j + 1 :])
+                self.child = BinaryOp().parse(operator, lhs, rhs)
+                return self
+
+        for j in range(i):
+            if expr[j] == "|":
+                lhs = whitespace.join(expr[:j])
+                operator = "|"
+                rhs = whitespace.join(expr[j + 1 :])
+                self.child = BinaryOp().parse(operator, lhs, rhs)
+                return self
+
+        for j in range(i):
+            if expr[j] == "^":
+                lhs = whitespace.join(expr[:j])
+                operator = "^"
+                rhs = whitespace.join(expr[j + 1 :])
+                self.child = BinaryOp().parse(operator, lhs, rhs)
+                return self
+
+        for j in range(i):
+            if expr[j] == "&":
+                if j != 0:
+                    lhs = whitespace.join(expr[:j])
+                    operator = "&"
+                    rhs = whitespace.join(expr[j + 1 :])
+                    self.child = BinaryOp().parse(operator, lhs, rhs)
+                    return self
+
+        for j in range(i):
+            if expr[j] in {"!=", "=="}:
+                lhs = whitespace.join(expr[:j])
+                operator = expr[j]
+                rhs = whitespace.join(expr[j + 1 :])
+                self.child = BinaryOp().parse(operator, lhs, rhs)
+                return self
+
+        for j in range(i):
+            if expr[j] in {"<", "<=", ">", ">="}:
+                lhs = whitespace.join(expr[:j])
+                operator = expr[j]
+                rhs = whitespace.join(expr[j + 1 :])
+                self.child = BinaryOp().parse(operator, lhs, rhs)
+                return self
+
+        for j in range(i):
+            if expr[j] in {"<<", ">>"}:
+                lhs = whitespace.join(expr[:j])
+                operator = expr[j]
+                rhs = whitespace.join(expr[j + 1 :])
+                self.child = BinaryOp().parse(operator, lhs, rhs)
+                return self
+
+        for j in range(i):
+            if expr[j] in {"+", "-"}:
+                if j != 0:
+                    lhs = whitespace.join(expr[:j])
+                    operator = expr[j]
+                    rhs = whitespace.join(expr[j + 1 :])
+                    self.child = BinaryOp().parse(operator, lhs, rhs)
+                    return self
+
+        for j in range(i):
+            if expr[j] in {"*", "/", "%"}:
+                lhs = whitespace.join(expr[:j])
+                operator = expr[j]
+                rhs = whitespace.join(expr[j + 1 :])
+                self.child = BinaryOp().parse(operator, lhs, rhs)
+                return self
+
+        if expr[0] in {"+", "-", "++", "--", "~", "!", "sizeof", "&"}:
+            operator = "pre" + expr[0]
+            operand = whitespace.join(expr[1:])
+            self.child = UnaryOp().parse(operator, operand)
+            return self
+
+        elif expr[-1] in {"++", "--"}:
+            operator = "post" + expr[-1]
+            operand = whitespace.join(expr[:-1])
+            self.child = UnaryOp().parse(operator, operand)
+            return self
+
+        elif len(expr) == 0:
+            if int(expr[0]) == expr[0] or float(expr[0]) == expr[0]:
+                self.child = Constant().parse(expr[0])
+            else:
+                self.child = Identifier().parse(expr[0])
+
+        # TODO: handle function call.
+
         else:
             SyntaxError()
 
@@ -209,9 +434,9 @@ class Expression:
 class Declaration:
     def __init__(self):
         self.tag = "Declaration"
-        self.type
-        self.identifier
-        self.size
+        self.type = None
+        self.identifier = None
+        self.size = None
 
     # type = {"int", "float"}, identifier: consider naming convention, size: if any (default: None).
     # Check whether if size is integer or not.
@@ -228,7 +453,7 @@ class Declaration:
 class Return:
     def __init__(self):
         self.tag = "Return"
-        self.expr
+        self.expr = None
 
     # expr: as string.
     def parse(self, expr):
@@ -242,7 +467,7 @@ class Return:
 class If:
     def __init__(self):
         self.tag = "If"
-        self.condition
+        self.condition = None
         self.then = []
         self.else_ = []
 
@@ -254,16 +479,16 @@ class If:
             self.then.append(Statement().parse(stmt))
         for stmt in else_:
             self.else_.append(Statement().parse(stmt))
-        
+
         return self
 
 
 class For:
     def __init__(self):
         self.tag = "For"
-        self.initializer
-        self.condition
-        self.step
+        self.initializer = None
+        self.condition = None
+        self.step = None
         self.statements = []
 
     def parse(self, initializer, condition, step, statements):
@@ -285,8 +510,8 @@ class For:
 class Function:
     def __init__(self):
         self.tag = "Function"
-        self.type
-        self.identifier
+        self.type = None
+        self.identifier = None
         self.parameters = []
         self.statements = []
 
@@ -302,7 +527,7 @@ class Function:
             self.parameters.append(parameter)
         for stmt in statements:
             self.statements.append(Statement().parse(stmt))
-            
+
         return self
 
 
@@ -320,10 +545,10 @@ class Function:
 class UnaryOp:
     def __init__(self):
         self.tag = "UnaryOp"
-        self.operator
+        self.operator = None
 
         # Statement(Expression)
-        self.operand
+        self.operand = None
 
         self.is_lvalue = False
 
@@ -334,7 +559,7 @@ class UnaryOp:
         if self.operand.child.tag != "Expression":
             syntaxError()
 
-        if operator in  {"pre++", "pre--", "post++", "post--", "&"}:
+        if operator in {"pre++", "pre--", "post++", "post--", "&"}:
             if not self.operand.child.is_lvalue():
                 syntaxError()
 
@@ -349,9 +574,9 @@ class UnaryOp:
 class BinaryOp:
     def __init__(self):
         self.tag = "BinaryOp"
-        self.operator
-        self.lhs
-        self.rhs
+        self.operator = None
+        self.lhs = None
+        self.rhs = None
         self.is_lvalue = False
 
     def parse(self, operator, lhs, rhs):
@@ -384,7 +609,7 @@ class BinaryOp:
             if not self.lhs.child.is_lvalue():
                 syntaxError()
             self.is_lvalue = False
-            
+
         # Size check in runtime.
         if operator == "index":
             if not self.lhs.child.is_lvalue():
@@ -398,7 +623,7 @@ class BinaryOp:
 class FunctionCall:
     def __init__(self):
         self.tag = "FunctionCall"
-        self.name
+        self.name = None
         self.arguments = []
         self.is_lvalue = False
 
@@ -423,7 +648,7 @@ class FunctionCall:
 class Identifier:
     def __init__(self):
         self.tag = "Identifier"
-        self.name
+        self.name = None
         self.is_lvalue = True
 
     def parse(self, name):
@@ -438,7 +663,7 @@ class Identifier:
 
 # C constants: Integer, Float. No character, no string literal.
 class Constant:
-    def __init__(self, type_ = None, value = None):
+    def __init__(self, type_, value):
         self.tag = "Constant"
         self.type = type_
         self.value = value
@@ -454,79 +679,14 @@ class Constant:
             self.type = "int"
 
         return self
-    
-    def sum(const_a, const_b):
-        if const_a.type not in ["int", "float"]: raise RuntimeError()
-        if const_b.type not in ["int", "float"]: raise RuntimeError()
-        if const_a.type == "float" or const_b.type == "float":
-            return Constant(
-                "float",
-                float(const_a.value + const_b.value)
-            )
-        else:
-            return Constant(
-                "int",
-                int(const_a.value + const_b.value)
-            )
-    
-    def subt(const_a, const_b):
-        if const_a.type not in ["int", "float"]: raise RuntimeError()
-        if const_b.type not in ["int", "float"]: raise RuntimeError()
-        if const_a.type == "float" or const_b.type == "float":
-            return Constant(
-                "float",
-                float(const_a.value - const_b.value)
-            )
-        else:
-            return Constant(
-                "int",
-                int(const_a.value - const_b.value)
-            )
-    
-    def mult(const_a, const_b):
-        if const_a.type not in ["int", "float"]: raise RuntimeError()
-        if const_b.type not in ["int", "float"]: raise RuntimeError()
-        if const_a.type == "float" or const_b.type == "float":
-            return Constant(
-                "float",
-                float(const_a.value * const_b.value)
-            )
-        else:
-            return Constant(
-                "int",
-                int(const_a.value * const_b.value)
-            )
-    
-    def div(const_a, const_b):
-        if const_a.type not in ["int", "float"]: raise RuntimeError()
-        if const_b.type not in ["int", "float"]: raise RuntimeError()
-        if const_a.type == "float" or const_b.type == "float":
-            return Constant(
-                "float",
-                float(const_a.value / const_b.value)
-            )
-        else:
-            return Constant(
-                "int",
-                int(const_a.value / const_b.value)
-            )
-    
-    def remain(const_a, const_b):
-        if const_a.type != "int": raise RuntimeError()
-        if const_b.type != "int": raise RuntimeError()
-        return Constant(
-            "int",
-            int(const_a.value % const_b.value)
-        )
-    
-    def bit_and(const_a, const_b):
-        if const_a.type != "int": raise RuntimeError()
-        if const_b.type != "int": raise RuntimeError()
-        return Constant(
-            "int",
-            int(const_a.value & const_b.value)
-        )
-    
+
+
+def AST(code):
+    statements = getStatements(code)
+    ast = []
+    for stmt in statements:
+        ast.append(Statement().parse(stmt))
+
     def bit_or(const_a, const_b):
         if const_a.type != "int": raise RuntimeError()
         if const_b.type != "int": raise RuntimeError()
