@@ -1,7 +1,7 @@
 MAX_SPACE = 1000
 print_size = 50
 data_blank = '*'        # form of blank data (string currently) # TODO #1: change into better data form
-debugging = True        # print addr. off in malloc & free
+debugging = False        # print addr. off in malloc & free
 debugging2 = False      # print more arguments before some specific function returns
 debugging3 = False      # printing all memory changing
 base_address = 0x100000 # base address of virtual memory space
