@@ -47,8 +47,20 @@ def lineCleaner(lines_of_code):
 def splitSpecial(code_line):
     output = code_line[0]
     for i in range(1, len(code_line)):
-        frontSpaced = {"(", "{"}
-        bothSpaced = {"+", "-", "=", "<", ">"}
+        frontSpaced = {"(", "{", ";", "["}
+        bothSpaced = {
+            "+",
+            "-",
+            "=",
+            "<",
+            ">",
+            "int",
+            "float",
+            "return",
+            "else",
+            "if",
+            "for",
+        }
         char = code_line[i]
         if char in frontSpaced:
             char = " " + char
@@ -68,6 +80,8 @@ def splitSpecial(code_line):
 # 3) Need to change line after ';' and '{'.
 #    Need to change line before and after '}'.
 #    Consider arrays and for loop?
+#
+# 4) Determine post/pre of ++, --.
 # ----------------------------------
 
 # ----------------------------------
