@@ -8,28 +8,27 @@ def syntaxError():
 
 
 # -----------------------------------------------------------------------------------------------
-class Statement:
-    def __init__(self):
-        # TODO: Temporary assign
-        self.child = Expression()
-        pass
-
-    def parse(self):
-        return self
-
-
-# -----------------------------------------------------------------------------------------------
 # Sub-types of Statements.
 # -----------------------------------------------------------------------------------------------
-# 0) Expression: some code line gives value.
-# 1) Assignment: 'variable = value;'
-# 2) Function: 'type identifier(parameter: types) {}'
-# 3) Declaration: 'type variable;'
-# 4) For: 'for (variable: iterator; condition; step) {}'
-# 5) If: 'if (Condition) {}'
-# 6) Return: 'return Statement(Expression);'
+#
+# Declaration: type("int", "float") identifier;
+# Return: return (expr)
+# If: if (condition: expr) {then stmts} else(if any) {else stmts}
+# For: for (initializer: expr; condition: expr; step: expr) {stmts}
+# Function: type("int", "float") identifier (params: declaration) {stmt}
+# -----------------------------------------------------------------------------------------------
+
+class Statement:
+    def __init__(self):
+        self.tag = "Statement"
+        self.child = Expression()
+    
+    # TODO: Parse into sub-types.
+    def parse(self, code):
+        return self
 
 # Expressions: Calculations (UnaryOp, BinaryOp) / Factors (Identifier, FunctionCall, Constant)
+# Precedence.
 class Expression:
     def __init__(self):
         self.tag = "Expression"
@@ -48,6 +47,8 @@ class Expression:
             self.child = Identifier().parse(0)
         elif expr == "Constant":
             self.child = Constant().parse(0)
+        else:
+            SyntaxError()
 
         return self
 
@@ -87,7 +88,7 @@ class Return:
 
 class If:
     def __init__(self):
-        self.condition = []
+        self.condition
         self.then = []
         self.else = []
 
@@ -159,7 +160,7 @@ class Function:
 # 5) Constant
 # -----------------------------------------------------------------------------------------------
 
-# pre++, pre--, post++, post--, sizeof(?), *, &, +, -, ~, !
+# pre++, pre--, post++, post--, sizeof, *, &, +, -, ~, !
 class UnaryOp:
     def __init__(self):
         self.tag = "UnaryOp"
@@ -177,9 +178,13 @@ class UnaryOp:
         if self.operand.child.tag != "Expression":
             syntaxError()
 
-        if operator in {"pre++", "pre--", "post++", "post--", "&", "*"}:
+        if operator in  {"pre++", "pre--", "post++", "post--", "&"}:
             if not self.operand.child.is_lvalue():
                 syntaxError()
+
+        # Need to check type in runtime.
+        if operator == "*":
+            self.is_lvalue = True
 
         return self
 
@@ -191,7 +196,7 @@ class BinaryOp:
         self.operator
         self.lhs
         self.rhs
-        self.is_lvalue
+        self.is_lvalue = False
 
     def parse(self, operator, lhs, rhs):
         self.operator = operator
@@ -220,13 +225,15 @@ class BinaryOp:
             "<<=",
             ">>=",
         }:
-            self.is_lvalue = True
-
+            if not self.lhs.child.is_lvalue():
+                    syntaxError()
+            self.is_lvalue = False
+            
+        # TODO: Handle index after... use size? -> runtime.
+        if operator == "index":
             if not self.lhs.child.is_lvalue():
                 syntaxError()
-        # TODO: Handle index after... use size? -> runtime.
-        # if operator == "index":
-        #     self.is_lvalue = True
+            self.is_lvalue = True
 
         return self
 
@@ -285,12 +292,10 @@ class Constant:
         self.value = constant
 
         if constant == float(constant):
-            self.type = "Float"
+            self.type = "float"
 
         if constant == int(constant):
-            self.type = "Int"
+            self.type = "int"
 
         return self
-
-
 # -----------------------------------------------------------------------------------------------
