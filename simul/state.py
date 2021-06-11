@@ -16,8 +16,6 @@ def to_type(value, type_):
 class State:
     def __init__(self, statements):
         self.scope = Scope()
-        # self.history = History()
-        # self.ftable = FunctionTable()
         self.heap = Heap()
         self.statements = statements
         self.ip = 0

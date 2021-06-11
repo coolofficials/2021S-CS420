@@ -179,7 +179,7 @@ class Statement:
 class Expression:
     def __init__(self):
         self.tag = "Expression"
-        self.child
+        self.child = None
 
     # Parse into sub-types.
     # Get expr as list of words(tokens).
