@@ -3,6 +3,7 @@ from collections import deque
 # Local
 from scope import *
 from parser2 import *
+from memory import *
 
 def to_type(value, type_):
     if type_ == "int":
@@ -17,7 +18,7 @@ class State:
         self.scope = Scope()
         # self.history = History()
         # self.ftable = FunctionTable()
-        self.heap = None
+        self.heap = Heap()
         self.statements = statements
         self.ip = 0
         self.goback = deque()
@@ -135,7 +136,7 @@ class State:
                 self.statements = ifblk.then
             else:
                 self.ip = 0
-                self.statements = ifblk.else
+                self.statements = ifblk.else_
     
     def evaluate(self, expression, line_number):
         chld = expression.child
@@ -435,7 +436,7 @@ class State:
             if left.child.tag == "Identifier":
                 right_const = self.evaluate(right, line_number)
                 left_const = self.scope.get_const(left.identifier)
-                ret_const = Constant.and(left_const, right_const)
+                ret_const = Constant.bit_and(left_const, right_const)
                 self.scope.history.assign(
                     left.identifier,
                     ret_const
@@ -446,7 +447,7 @@ class State:
             if left.child.tag == "Identifier":
                 right_const = self.evaluate(right, line_number)
                 left_const = self.scope.get_const(left.identifier)
-                ret_const = Constant.or(left_const, right_const)
+                ret_const = Constant.bit_or(left_const, right_const)
                 self.scope.history.assign(
                     left.identifier,
                     ret_const
@@ -457,7 +458,7 @@ class State:
             if left.child.tag == "Identifier":
                 right_const = self.evaluate(right, line_number)
                 left_const = self.scope.get_const(left.identifier)
-                ret_const = Constant.xor(left_const, right_const)
+                ret_const = Constant.bit_xor(left_const, right_const)
                 self.scope.history.assign(
                     left.identifier,
                     ret_const
@@ -470,12 +471,13 @@ class State:
         if fname == "malloc":
             if len(fargs) != 1: raise RuntimeError()
             if fargs[0].type != "int": raise RuntimeError()
-            # TODO: call function in memory module
+            addr = self.heap.malloc(fargs[0].value)
+            return Constant("pointer", addr)
         
         elif fname == "free":
             if len(fargs) != 1: raise RuntimeError()
-            # TODO: call function in memory module
-        
+            return self.heap.free(fargs)
+            
         else:
             fargs = [self.evaluate(farg.child) for farg in fargs]
             scope, return_type, parameters, args, statements = self.scope.ftable.call(fname, fargs)

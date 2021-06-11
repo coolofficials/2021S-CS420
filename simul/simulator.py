@@ -88,11 +88,10 @@ if __name__ == "__main__":
                 do_next_loop = False
             else:
                 if (cmd == "next"):
-                    for i in range(arg):
-                        state.next()
+                    state.do_next_lines(arg)
                 elif (cmd == "print"):
-                    None
+                    state.scope.history.print(arg)
                 elif (cmd == "trace"):
-                    None
+                    state.scope.history.trace(arg)
                 elif (cmd == "mem"):
-                    None
+                    state.heap.mem()
