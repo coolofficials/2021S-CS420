@@ -59,6 +59,7 @@ class State:
                 ip = ip
                 statements = statements
                 
+                line_number = statements[ip].line_number
                 chld = statements[ip].child
                 if (chld.tag == "For"):
                     # finished iteration of [initializer] or body + [step]
@@ -71,7 +72,7 @@ class State:
                     # our simulator will terminate one line earlier than gdb.
                     
                     forblk = chld
-                    if bool(self.evaluate(forblk.condition, stmt.line_number)):
+                    if bool(self.evaluate(forblk.condition, line_number)):
                         self.ip = 0
                         self.statements = forblk.body + [forblk.step]
                     else:
