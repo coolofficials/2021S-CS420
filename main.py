@@ -55,6 +55,15 @@ def main():             # testing memory.py
     heap.mem()      # a c e f h i / 8 8 8 15 333 333 = 6, 705
     l = heap.malloc(295)
 
+    """
+    address1 = heap.malloc(111)
+    address2 = heap.malloc(222)
+    address3 = heap.malloc(333)
+    heap.free(address2)
+    address4 = heap.malloc(444)
+    address5 = heap.malloc(555)
+    """
+
 
 if __name__ == '__main__':
     main()
