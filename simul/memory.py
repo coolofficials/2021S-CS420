@@ -1,9 +1,9 @@
 MAX_SPACE = 1000
 print_size = 50
 data_blank = '*'        # form of blank data (string currently) # TODO #1: change into better data form
-debugging = False       # print arguments for errors
-debugging2 = False      # print arguments before some function returns
-debugging3 = False      # memory tracking
+debugging = False        # print addr. off in malloc & free
+debugging2 = False      # print more arguments before some specific function returns
+debugging3 = False      # printing all memory changing
 base_address = 0x100000 # base address of virtual memory space
 VM_size = MAX_SPACE * 100   # max_size of virtual memory space
 
@@ -233,7 +233,7 @@ class Heap:
             return 0
 
         off, size = self.dic[var]
-        if debugging2:
+        if debugging:
             print("free addr : {:#x} offset : {}\n".format(var, off))
 
         # remove var from table, data(memory), self.dic
