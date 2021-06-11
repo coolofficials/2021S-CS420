@@ -6,7 +6,8 @@
 
 We have written two separate programs to interpret the input code: the Pasrer and the Runtime Simulator.       
 The Interpreter parses through the input code, written in the Mini-C language. If the input code has no syntactical errors, it will be converted into an AST structure.     
-The AST structure is passed on to the AST Parser, which will simulate and demonstrate the "runtime" environment of the input code, according to the command line inputs.
+The AST structure is passed on to the AST Parser, which will simulate and demonstrate the "runtime" environment of the input code, according to the command line inputs.        
+However our implementation fails to correctly simulate many features of the C language, and there is no feature to pass the AST from the parser to the simulator.
 
 ## Parser
 
