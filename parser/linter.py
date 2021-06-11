@@ -8,8 +8,23 @@
 # input = ["      if(   ", "i -- 0)", "{   ", "a ", " =1;", "   }     "]
 
 
+# 1) Need to change line after ';' and '{'.
+#    Need to change line before and after '}'.
+#    Consider arrays and for loop?
+#
+def changeLine(source):
+    result = []
+    for line in source:
+        line = line.replace(";", ";#")
+        line = line.replace("{", "{#")
+        line = line.replace("}", "#}")
+        splited = line.split("#")
+        result += splited
+    return result
+
+
 # ----------------------------------
-# 1) Remove unnecessary line changes.
+# 2) Remove unnecessary line changes.
 # Line changes without ; or { except for line only with }.
 # Example)
 # if(
@@ -20,7 +35,7 @@
 # }
 # ----------------------------------
 def lineCleaner(lines_of_code):
-
+    lines_of_code = changeLine(lines_of_code)
     end = {";", "{"}
     result = []
     token = ""
@@ -32,6 +47,8 @@ def lineCleaner(lines_of_code):
         if line == "}":
             result.append(token)
             token = ""
+        elif line == "":
+            pass
         elif line[-1] not in end:
             pass
         else:
@@ -42,7 +59,7 @@ def lineCleaner(lines_of_code):
 
 
 # ----------------------------------
-# 2) Whitespace front of '(' and '{', whitespace at front and behind of '+, -, =, <, >, >=, <='.
+# 3) Whitespace front of '(' and '{', whitespace at front and behind of '+, -, =, <, >, >=, <='.
 # Example)
 # if(i == 0){} into if (i == 0) {}
 # ----------------------------------
@@ -71,13 +88,8 @@ def splitSpecial(code_line):
     return output
 
 
-# ----------------------------------
-# TODO
-# 3) Need to change line after ';' and '{'.
-#    Need to change line before and after '}'.
-#    Consider arrays and for loop?
 #
-# 4) Determine post/pre of ++, --.
+# TODO: 4) Determine post/pre of ++, --.
 # ----------------------------------
 
 # ----------------------------------
@@ -93,3 +105,6 @@ def lint(source):
         result.append(splitSpecial(line))
 
     return result
+
+
+print(lint(["if (fadsfaf){  }", "aasd"]))
