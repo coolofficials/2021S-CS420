@@ -426,6 +426,7 @@ class Expression:
                 syntaxError
             else:
                 arguments = getStatements(whitespace.join(expr[2:-1]))
+            self.child = FunctionCall().parse(identifier, arguments)
 
         else:
             SyntaxError()
