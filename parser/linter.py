@@ -20,12 +20,14 @@
 # }
 # ----------------------------------
 def lineCleaner(lines_of_code):
+
     end = {";", "{"}
     result = []
     token = ""
 
     for line in lines_of_code:
-        line = line.replace(" ", "")
+        line = line.strip()
+        line = line.replace(",", " ")
         token += line
         if line == "}":
             result.append(token)
@@ -54,12 +56,6 @@ def splitSpecial(code_line):
             "=",
             "<",
             ">",
-            "int",
-            "float",
-            "return",
-            "else",
-            "if",
-            "for",
         }
         char = code_line[i]
         if char in frontSpaced:
