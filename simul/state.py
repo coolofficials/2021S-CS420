@@ -60,8 +60,8 @@ class State:
                 ip = ip
                 statements = statements
                 
-                stmt = statements[ip]
-                if (stmt.tag == "for"):
+                chld = statements[ip].child
+                if (chld.tag == "For"):
                     # finished iteration of [initializer] or body + [step]
                     # evaluate condition and set ip and scope appropriately
                     
@@ -71,7 +71,7 @@ class State:
                     # this means if an error occurs during condition evaluation,
                     # our simulator will terminate one line earlier than gdb.
                     
-                    forblk = stmt
+                    forblk = chld
                     if bool(self.evaluate(forblk.condition, stmt.line_number)):
                         self.ip = 0
                         self.statements = forblk.body + [forblk.step]
@@ -79,6 +79,15 @@ class State:
                         self.scope = scope_out
                         self.statements = statements
                         self.ip = ip + 1
+                
+                elif (chld.tag == "If"):
+                    # finished iteration of then or else
+                    # restore ip and statements. increment ip by one.
+                    ifblk = chld
+                    self.scope = scope_out
+                    self.statements = statements
+                    self.ip = ip + 1
+                
                 # TODO: Other cases
     
     def execute_stmt(self, stmt, aux = None):
@@ -115,8 +124,18 @@ class State:
             self.ip = 0
         
         elif (chld.tag == "If"):
-            ifblk = stmt
+            ifblk = chld
             condition = ifblk.condition
+            condition_result = bool(self.evaluate(condition))
+            self.goback.append(
+                (self.scope.deepcopy(0), self.ip, list(self.statements))
+            )
+            if condition_result:
+                self.ip = 0
+                self.statements = ifblk.then
+            else:
+                self.ip = 0
+                self.statements = ifblk.else
     
     def evaluate(self, expression, line_number):
         chld = expression.child
